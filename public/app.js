@@ -119,10 +119,12 @@ let questionNo=0;function setQuestion(i){questionNo=i%3;$('#questionIndex').text
 $('#nextQuestion').addEventListener('click',()=>setQuestion(questionNo+1));
 let mentorTurns=[];
 async function callAI(type,message,extra={}){
- if(location.protocol==='file:')throw new Error('AI requires Netlify deployment with GEMINI_API_KEY.');
- const controller=new AbortController(), timeout=setTimeout(()=>controller.abort(),31000);
+ if(location.protocol==='file:')throw new Error('AI requires your deployed Aivora website.');
+ const token=await window.AivoraAuth?.getAccessToken?.();
+ if(!token)throw new Error('Please sign in to use Aivora AI.');
+ const controller=new AbortController(), timeout=setTimeout(()=>controller.abort(),65000);
  try{
-  const response=await fetch('/api/mentor',{method:'POST',headers:{'Content-Type':'application/json'},signal:controller.signal,body:JSON.stringify({type,role:roleLabel().name,message,skills:roleLabel().skills.map((skill,i)=>({name:skill[0],rating:getRatings()[i]})),progress:getCompleted().filter(Boolean).length,history:type==='mentor'?mentorTurns.slice(-8):[],...extra})});
+  const response=await fetch('/api/mentor',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},signal:controller.signal,body:JSON.stringify({type,role:roleLabel().name,message,skills:roleLabel().skills.map((skill,i)=>({name:skill[0],rating:getRatings()[i]})),progress:getCompleted().filter(Boolean).length,history:type==='mentor'?mentorTurns.slice(-8):[],...extra})});
   const data=await response.json().catch(()=>({}));
   if(!response.ok)throw new Error(data.error||('AI server error '+response.status));
   if(typeof data.reply!=='string'||!data.reply.trim())throw new Error('No AI reply returned');
@@ -132,7 +134,7 @@ async function callAI(type,message,extra={}){
 async function checkAIStatus(){
  try{const r=await fetch('/api/mentor',{method:'GET',cache:'no-store'});const d=await r.json();const ready=r.ok&&d.connected===true;
   $('#dashStatus').textContent=ready?'✳ GEMINI KEY CONFIGURED':'LOCAL DEMO · ADD GEMINI KEY';
-  $('#mentorMode').textContent=ready?'KEY READY · '+(d.model||'AI'):'DEMO MODE · GEMINI NOT CONNECTED';
+  $('#mentorMode').textContent=ready?'CAREER-ONLY GEMINI · '+(d.model||'AI'):'GEMINI NOT CONNECTED';
  }catch(e){$('#dashStatus').textContent='LOCAL DEMO · DEPLOY TO ENABLE AI';$('#mentorMode').textContent='DEMO MODE · DEPLOY ZIP FOR AI'}
 }
 $('#evaluateAnswer').addEventListener('click',async()=>{const ans=$('#interviewAnswer').value.trim();if(ans.length<18){toast('Write at least a couple of sentences first');return}const btn=$('#evaluateAnswer'),box=$('#interviewFeedback');btn.disabled=true;box.classList.add('visible');box.textContent='Reviewing your answer…';const prompt=`Interview question: ${roleLabel().questions[questionNo]}\nStudent answer: ${ans}`;
@@ -167,7 +169,7 @@ async function sendMentorMessage(q){
  q=q.trim().slice(0,1200);addChat('user',q);const pending=addChat('ai','Thinking about your next move…');
  const btn=$('#mentorForm button');btn.disabled=true;$('#mentorInput').disabled=true;
  try{const answer=await callAI('mentor',q);pending.querySelector('p').textContent=answer;mentorTurns.push({role:'user',text:q},{role:'model',text:answer});mentorTurns=mentorTurns.slice(-8);$('#mentorMode').textContent='✳ GEMINI LIVE ANSWER';$('#dashStatus').textContent='✳ GEMINI AI CONNECTED'}
- catch(e){pending.querySelector('p').textContent=mentorDemo(q)+'\n\nAI connection: '+e.message;$('#mentorMode').textContent='DEMO · RULE-BASED RESPONSE'}
+ catch(e){pending.querySelector('p').textContent='Aivora AI is currently unavailable: '+e.message;$('#mentorMode').textContent='AI CONNECTION ISSUE'}
  finally{btn.disabled=false;$('#mentorInput').disabled=false;$('#mentorInput').focus();$('#chatLog').scrollTop=$('#chatLog').scrollHeight}
 }
 $('#mentorForm').addEventListener('submit',async e=>{e.preventDefault();const q=$('#mentorInput').value.trim();if(!q)return;$('#mentorInput').value='';await sendMentorMessage(q)});
@@ -191,7 +193,7 @@ function showFit(){
 }
 function resetFit(){fitIndex=0;fitAnswers=[];showFit()}
 $('#fitBack').addEventListener('click',()=>{if(fitIndex>0){fitIndex--;fitAnswers.pop();showFit()}});$('#fitRestart').addEventListener('click',resetFit);
-function planDemo(level,hours,goal){const p=roleLabel(),skills=p.skills.map(s=>s[0]);return `STARTER TEMPLATE / DEMO MODE — NOT AI-GENERATED\nCareer: ${p.name} · ${hours} hours per week · ${level}\n\nWEEK 1 · BUILD FOUNDATIONS\nLearn ${skills[0]} and ${skills[1]}. Study for ${hours} hours; write short notes, build one mini exercise.\n\nWEEK 2 · APPLY YOUR LEARNING\nPractice ${skills[2]} and ${skills[3]}. Complete a small task and push working code or results to GitHub.\n\nWEEK 3 · BUILD A PROJECT\n${p.steps[3][1]} Document the problem, tech choices, screenshots, and limitations.\n\nWEEK 4 · PRACTICE & PRESENT\n${p.steps[4][1]} Revisit weaker skills, prepare three project explanations, and check your resume.\n\nGOAL YOU ENTERED: ${goal||'Not specified'}\n\nFor a personalized Gemini-generated plan, deploy the ZIP to Vercel and configure GEMINI_API_KEY.`}
+function planDemo(level,hours,goal){const p=roleLabel(),skills=p.skills.map(s=>s[0]);return `STARTER TEMPLATE / DEMO MODE — NOT AI-GENERATED\nCareer: ${p.name} · ${hours} hours per week · ${level}\n\nWEEK 1 · BUILD FOUNDATIONS\nLearn ${skills[0]} and ${skills[1]}. Study for ${hours} hours; write short notes, build one mini exercise.\n\nWEEK 2 · APPLY YOUR LEARNING\nPractice ${skills[2]} and ${skills[3]}. Complete a small task and push working code or results to GitHub.\n\nWEEK 3 · BUILD A PROJECT\n${p.steps[3][1]} Document the problem, tech choices, screenshots, and limitations.\n\nWEEK 4 · PRACTICE & PRESENT\n${p.steps[4][1]} Revisit weaker skills, prepare three project explanations, and check your resume.\n\nGOAL YOU ENTERED: ${goal||'Not specified'}\n\nFor a personalized Gemini-generated plan, set GEMINI_API_KEY in Netlify.`}
 $('#generatePlan').addEventListener('click',async()=>{
  const level=$('#planLevel').value,hours=$('#planHours').value,goal=$('#planGoal').value.trim().slice(0,500),out=$('#planOutput'),btn=$('#generatePlan');
  out.classList.add('visible');out.textContent='Building your 30-day study plan…';btn.disabled=true;
