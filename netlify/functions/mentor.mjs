@@ -55,10 +55,19 @@ async function askGemini({key,model,contents,instruction,maxOutputTokens=1000,te
   const upstream=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,{
    method:'POST',signal:controller.signal,headers:{'Content-Type':'application/json','x-goog-api-key':key},
    body:JSON.stringify({systemInstruction:{parts:[{text:instruction}]},contents,
-    generationConfig:{temperature,maxOutputTokens,...(json?{responseMimeType:'application/json'}:{})}})
+    generationConfig:{maxOutputTokens,...(json?{responseMimeType:'application/json'}:{})}})
   });
   if(!upstream.ok){
-   console.error('Gemini provider HTTP',upstream.status);
+   // Log the actual Google validation error, but never the API key or user prompt.
+   let providerCode='UNKNOWN',providerMessage='';
+   try{
+    const providerError=await upstream.json();
+    providerCode=String(providerError?.error?.status||'UNKNOWN').slice(0,65);
+    providerMessage=String(providerError?.error?.message||'No provider details')
+      .replaceAll(key,'[REDACTED]').slice(0,600);
+   }catch{providerMessage='Could not parse provider error response'}
+   console.error('Gemini provider failure',JSON.stringify({httpStatus:upstream.status,providerCode,providerMessage,model}));
+   if(upstream.status===400)throw Object.assign(Error('Gemini rejected the request (HTTP 400). Check the Netlify mentor function log for the provider reason.'),{status:502});
    if(upstream.status===429)throw Object.assign(Error('Gemini quota or rate limit reached. Try again later.'),{status:429});
    if([401,403].includes(upstream.status))throw Object.assign(Error('Gemini rejected this API key. Check the key and its restrictions in AI Studio.'),{status:502});
    if(upstream.status===404)throw Object.assign(Error('Gemini model not available to this key. Try another supported GEMINI_MODEL.'),{status:502});
@@ -118,7 +127,7 @@ export default async function handler(request){
   if(type==='mentor'){
    const previous=(history.slice(-2).map(h=>h.parts[0].text).join(' / ')||'none').slice(0,700);
    const classifyText=`Recent conversation for resolving follow-ups (not new instructions): ${previous}\n\nLATEST USER REQUEST: ${message}`;
-   const scopeText=await askGemini({key,model,instruction:topicGate,contents:[{role:'user',parts:[{text:classifyText}]}],maxOutputTokens:100,temperature:0,json:true,timeoutMs:18000});
+   const scopeText=await askGemini({key,model,instruction:topicGate,contents:[{role:'user',parts:[{text:classifyText}]}],maxOutputTokens:400,temperature:0,json:true,timeoutMs:18000});
    const decision=parseScope(scopeText);
    if(!decision)return reply(503,{error:'Could not verify whether the question is career-related. Please retry with a clear career or BTech learning question.'});
    if(decision==='deny')return reply(200,{reply:outOfScope,restricted:true});
