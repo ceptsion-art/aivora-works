@@ -255,3 +255,13 @@ body{scrollbar-color:#9851ab #160f20}
  .dashboard>.dash-sidebar>.dash-nav svg{width:19px;height:19px}
  .dashboard>.dash-sidebar>.dash-nav b{display:none}
 }
+
+/* Real progress sync, accessible state and backup controls */
+.aivora-sync-tools{display:inline-flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-left:auto;font:700 10px/1.4 inherit;letter-spacing:.07em}
+.aivora-sync-tools #aivoraSyncStatus{display:inline-flex;align-items:center;min-height:30px;border:1px solid #9a5baf66;border-radius:8px;padding:6px 9px;color:#e8d3ef;background:#23132b}
+.aivora-sync-tools #aivoraSyncStatus[data-status="saved"]{border-color:#5cd8a266;color:#b6fcd9}
+.aivora-sync-tools #aivoraSyncStatus[data-status="error"]{border-color:#fd799999;color:#ffafbe}
+.aivora-sync-tools button{color:#eed3f6;border:1px solid #965da877;border-radius:8px;padding:8px 9px;background:#24142e;cursor:pointer;font:700 10px/1.4 inherit;transition:background .2s,transform .2s}
+.aivora-sync-tools button:hover{background:#50255b;transform:translateY(-2px)}.aivora-sync-tools button:disabled{opacity:.4}
+@media(max-width:840px){.aivora-sync-tools{width:100%;justify-content:flex-start;margin-top:6px}}
+@media(prefers-reduced-motion:reduce){.aivora-sync-tools button{transition:none}}

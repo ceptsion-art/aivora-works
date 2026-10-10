@@ -1,21 +1,51 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 let client=null,user=null,saveTimer=null,ready=false;
-const pendingSaves=new Set();
+// Serialized, awaited Supabase writes: never announce cloud success before upsert completes.
+let latestSave=null,inFlightSave=null,saveWaiters=[],cloudSyncState='idle';
+const syncEvent=(status,detail='')=>{cloudSyncState=status;window.dispatchEvent(new CustomEvent('aivora-sync',{detail:{status,message:detail}}))};
+async function flushSave(){
+ clearTimeout(saveTimer);
+ if(inFlightSave){await inFlightSave.catch(()=>{});if(latestSave)return flushSave();return}
+ if(!latestSave)return;
+ const pending=latestSave;latestSave=null;
+ const waiters=saveWaiters.splice(0);
+ if(!client||!user||user.id!==pending.owner){const error=Error('Your session changed before the save. Sign in again.');waiters.forEach(x=>x.reject(error));syncEvent('error',error.message);return}
+ syncEvent('syncing');
+ inFlightSave=(async()=>{
+  const {error}=await client.from('app_state').upsert({user_id:pending.owner,data:pending.snapshot,updated_at:new Date().toISOString()},{onConflict:'user_id'});
+  if(error)throw error;
+ })();
+ try{await inFlightSave;waiters.forEach(x=>x.resolve());syncEvent('saved')}
+ catch(e){waiters.forEach(x=>x.reject(e));syncEvent('error',e?.message||'Could not save progress to Supabase');console.warn('Aivora cloud sync failed:',e?.message)}
+ finally{inFlightSave=null;if(latestSave){saveTimer=setTimeout(()=>flushSave(),450)}}
+}
+function queueProgress(data){
+ if(!client||!user)return Promise.reject(Error('Sign in before saving progress.'));
+ let snapshot;try{snapshot=JSON.parse(JSON.stringify(data))}catch{return Promise.reject(Error('Cannot serialize progress.'))}
+ latestSave={owner:user.id,snapshot};syncEvent('syncing');
+ clearTimeout(saveTimer);
+ const p=new Promise((resolve,reject)=>saveWaiters.push({resolve,reject}));
+ saveTimer=setTimeout(()=>flushSave(),650);
+ return p;
+}
+
 const $=s=>document.querySelector(s);
 const info=(msg)=>{const el=$('#authMessage');if(el)el.textContent=msg};
 const announce=()=>{const b=$('#signOutButton');if(b)b.hidden=!user;window.dispatchEvent(new CustomEvent('aivora-session',{detail:{user}}));};
 const api={isLoggedIn:()=>!!user,currentUserId:()=>user?.id||null,getAccessToken:async()=>{if(!client)return null;const {data,error}=await client.auth.getSession();if(error)throw error;return data?.session?.access_token||null},signIn:async(email,password)=>{if(!client)throw Error('Supabase configuration missing. Check your hosting environment variables.');const {data,error}=await client.auth.signInWithPassword({email,password});if(error)throw error;user=data.user;announce();return user},signUp:async(name,email,password)=>{if(!client)throw Error('Supabase not configured');const {data,error}=await client.auth.signUp({email,password,options:{data:{full_name:name},emailRedirectTo:location.origin+'/?auth_callback=1'}});if(error)throw error;if(data.session){info('Account created and signed in.');showEmailNotice({title:'You are signed in!',description:'Your account is ready. Open your dashboard to continue.',steps:['Go to your Aivora dashboard and continue your learning.']})}else{lastSignupEmail=email;resendNotBefore=Date.now()+60000;info('Verification requested. Check your inbox and Spam/Junk folder.');showEmailNotice({kicker:'ONE MORE STEP · VERIFY EMAIL',title:'Check your inbox ✉',description:'A verification email has been requested for this address. Open the email and click the confirmation link to activate your account.',email,steps:['Open your email inbox (also check Promotions, Spam or Junk).','Look for a verification email from Aivora / Supabase.','Click the confirmation link, then return here and sign in.'],resend:true,note:'No email yet? Sending may be delayed or limited. Resend is available after 60 seconds.'})}return data},signOut:async()=>{
   if(!client)throw Error('Account service is not ready yet.');
   // Supabase returns an error object; a resolved promise is not proof that sign-out worked.
+  // Best-effort flush before ending the authenticated session (no indefinite wait).
+  try{await Promise.race([flushSave(),new Promise(resolve=>setTimeout(resolve,3500))])}catch(e){console.warn('Pending save before sign-out:',e?.message)}
   const {error}=await client.auth.signOut();
   if(error)throw error;
-  user=null;clearTimeout(saveTimer);
+  user=null;clearTimeout(saveTimer);syncEvent('idle');
   const password=$('#authPassword');if(password)password.value='';
   announce();
   location.hash='#login';
   info('Signed out successfully. Your session has ended.');
   showEmailNotice({kicker:'ACCOUNT SECURITY',title:'You have signed out ✓',description:'Your Aivora session has ended successfully. You can now sign in with a different account, or continue exploring the public site.',steps:['To return to your own career dashboard, sign in again.']});
-},reset:async(email)=>{if(!client)throw Error('Supabase not configured');const {error}=await client.auth.resetPasswordForEmail(email,{redirectTo:location.origin+'/?auth_callback=1'});if(error)throw error;info('Password reset requested. Check your inbox.');showEmailNotice({kicker:'PASSWORD RECOVERY',title:'Check your email for a reset link',description:'If this email belongs to an account, a password-reset link has been requested.',email,steps:['Open your inbox and Spam/Junk folder.','Follow the password-reset link and set a new password.'],note:'If no message arrives, wait before trying again to avoid email rate limits.'})},loadProgress:async()=>{if(!client||!user)return null;const currentUserId=user.id;const {data,error}=await client.from('app_state').select('data').eq('user_id',currentUserId).maybeSingle();if(error)throw error;if(user?.id!==currentUserId)return null;return data?.data||null},saveProgress:async(data)=>{if(!client||!user)return;const owner=user.id,snapshot=JSON.parse(JSON.stringify(data));clearTimeout(saveTimer);saveTimer=setTimeout(async()=>{if(user?.id!==owner)return;const {error}=await client.from('app_state').upsert({user_id:owner,data:snapshot,updated_at:new Date().toISOString()},{onConflict:'user_id'});if(error){console.warn(error);info('Cloud sync failed: '+error.message)}},650)}};
+},reset:async(email)=>{if(!client)throw Error('Supabase not configured');const {error}=await client.auth.resetPasswordForEmail(email,{redirectTo:location.origin+'/?auth_callback=1'});if(error)throw error;info('Password reset requested. Check your inbox.');showEmailNotice({kicker:'PASSWORD RECOVERY',title:'Check your email for a reset link',description:'If this email belongs to an account, a password-reset link has been requested.',email,steps:['Open your inbox and Spam/Junk folder.','Follow the password-reset link and set a new password.'],note:'If no message arrives, wait before trying again to avoid email rate limits.'})},loadProgress:async()=>{if(!client||!user)return null;const currentUserId=user.id;const {data,error}=await client.from('app_state').select('data').eq('user_id',currentUserId).maybeSingle();if(error){syncEvent('error',error.message);throw error}if(user?.id!==currentUserId)return null;syncEvent('saved');return data?.data||null},saveProgress:queueProgress,flushProgress:flushSave,cloudStatus:()=>cloudSyncState};
 
 // AIVORA Email Experience — accessible, prominent feedback for email verification.
 // This script changes ONLY account feedback, not your Supabase config, sessions, or AI APIs.
