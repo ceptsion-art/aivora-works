@@ -502,7 +502,7 @@ const AIVORA_NAV_ICONS={
  fit:'<circle cx="11" cy="11" r="8"/><path d="m11 6 2 5-5 2 3-7Z"/><path d="m14 13-3 5-2-5"/>',
  overview:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
  skills:'<path d="M4 18v-6m0-4V6M12 18v-3m0-4V6M20 18v-6m0-4V6"/><path d="M1 12h6M9 15h6M17 12h6"/>',
- plan:'<calendar/><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18M8 15h4M8 18h7"/>',
+ plan:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18M8 15h4M8 18h7"/>',
  roadmap:'<circle cx="6" cy="18" r="2"/><circle cx="18" cy="6" r="2"/><path d="M8 18h4a6 6 0 0 0 6-6V8M9 6H5v4"/>',
  interview:'<path d="M4 6h16v11H9l-5 4V6Z"/><path d="M8 10h8M8 13h5"/>',
  resume:'<path d="M7 3h7l5 5v13H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>',
@@ -537,27 +537,55 @@ function updateOverview(){const score=readiness(),steps=getCompleted().filter(Bo
 function updateDashboard(){if(!ROLE_IDS.includes(state.role))state.role='frontend';$('#roleSelect').value=state.role;$('#networkRole').value=state.role;const name=state.profile?.name?.trim();$('#dashGreeting').textContent=name?`Welcome back, ${name.slice(0,35)}.`:'Your personal workspace.';updateOverview();renderSliders();renderRoadmap();setQuestion(0);renderNetwork();refreshExtras();renderRolePicker()}
 $('#roleSelect').addEventListener('change',e=>{state.role=e.target.value;persist();updateDashboard();renderRolePicker();toast('Switched to '+roleLabel().name)});
 
-// Searchable role explorer with keyboard/escape support. Native select stays in sync for compatibility.
-const roleBtn=$('#rolePickerButton'),roleMenu=$('#rolePickerMenu'),roleSearch=$('#roleSearch'),roleList=$('#rolePickerList');
-let roleCategory='All';
-const allCategories=['All',...new Set(ROLE_IDS.map(id=>PATHS[id].category||'Core'))];
+// Minimal, accessible career chooser: organized list with distinct vector icons.
+const roleBtn=$('#rolePickerButton'),roleMenu=$('#rolePickerMenu'),roleList=$('#rolePickerList');
+const ROLE_ICON_PATHS={
+ frontend:'<rect x="2.5" y="4" width="19" height="16" rx="2"/><path d="M2.5 9h19m-12 5-2 2 2 2m5-4 2 2-2 2"/>',
+ ai:'<path d="M12 2v3m0 14v3M2 12h3m14 0h3M4.5 4.5l2.2 2.2m10.6 10.6 2.2 2.2M19.5 4.5l-2.2 2.2M6.7 17.3l-2.2 2.2"/><circle cx="12" cy="12" r="6"/><path d="m10 12 1.5 1.5L14.5 10"/>',
+ data:'<path d="M4 19h16M7 15V9m5 6V5m5 10v-4"/><circle cx="7" cy="7" r="1"/><circle cx="17" cy="8" r="1"/>',
+ cloud:'<path d="M7 18h11a4 4 0 0 0 0-8h-.6A6 6 0 0 0 6 11a3.5 3.5 0 0 0 1 7Z"/>',
+ backend:'<rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01M11 7.5h7M11 16.5h7"/>',
+ fullstack:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18m-11 0v9m4-5h4"/>',
+ mobile:'<rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 5h4m-3 14h2"/>',
+ software:'<path d="m8 7-5 5 5 5m8-10 5 5-5 5M14 4l-4 16"/>',
+ security:'<path d="M12 2 4 5v6c0 5 3.5 8.8 8 11 4.5-2.2 8-6 8-11V5l-8-3Z"/><path d="m9 12 2 2 4-4"/>',
+ pentest:'<circle cx="8" cy="9" r="4"/><path d="m11 12 10 10m-5-5 2-2m-4 0 2-2"/>',
+ devops:'<path d="M7 7h10l-3-3m3 3-3 3M17 17H7l3 3m-3-3 3-3"/><path d="M4 11v2m16-2v2"/>',
+ sre:'<path d="M3 12h4l3-7 4 14 3-7h4"/>',
+ network:'<rect x="9" y="2" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="16" y="16" width="6" height="6" rx="1"/><path d="M12 8v4H5v4m7-4h7v4"/>',
+ architect:'<path d="m12 2 9 5-9 5-9-5 9-5Zm-9 10 9 5 9-5m-18 5 9 5 9-5"/>',
+ scientist:'<path d="M9 2h6m-5 0v7L4 19a2 2 0 0 0 2 3h12a2 2 0 0 0 2-3l-6-10V2M7 16h10"/>',
+ dataeng:'<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v7c0 4 16 4 16 0V5M4 12v7c0 4 16 4 16 0v-7"/>',
+ bi:'<path d="M3 3v18h18M7 16v-4m5 4V7m5 9v-7"/>',
+ nlp:'<path d="M4 4h16v13H9l-5 4V4Z"/><path d="M8 9h8m-8 4h5"/>',
+ prompt:'<rect x="3" y="3" width="18" height="18" rx="4"/><path d="m8 10 3 3-3 3m5 0h4"/>',
+ ux:'<circle cx="12" cy="12" r="9"/><circle cx="8" cy="9" r="1"/><circle cx="13" cy="7" r="1"/><circle cx="17" cy="11" r="1"/><path d="M13 20c-4 0-3-4 0-4h2a2 2 0 0 0 0-4"/>',
+ product:'<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 4V2m8 2V2M3 10h18m-13 5h8"/>',
+ qa:'<path d="M9 3H4v18h16V3h-5M9 2h6v4H9zM8 13l2 2 5-5"/>',
+ games:'<path d="M7 8h10a5 5 0 0 1 5 5l-1 5a2 2 0 0 1-3 1l-3-2H9l-3 2a2 2 0 0 1-3-1l-1-5a5 5 0 0 1 5-5Z"/><path d="M7 11v5m-2.5-2.5h5M17 12h.01M19 14h.01"/>',
+ arvr:'<rect x="2" y="8" width="20" height="10" rx="4"/><path d="M2 12 4 5h16l2 7M8 12h2m4 0h2"/>',
+ robotics:'<rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 3v5m-3-5h6M8 13h.01M16 13h.01M8 17h8M2 12v5m20-5v5"/>',
+ embedded:'<rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4m6-4v4M9 18v4m6-4v4M2 9h4m-4 6h4m12-6h4m-4 6h4M10 10h4v4h-4z"/>',
+ iot:'<path d="M5 12a10 10 0 0 1 14 0M8 15a6 6 0 0 1 8 0m-5 3 1 1 1-1"/><rect x="9" y="2" width="6" height="4" rx="1"/>',
+ blockchain:'<path d="m12 2 7 4v8l-7 4-7-4V6l7-4Zm0 8 7-4m-7 4L5 6m7 4v8m-7-4-3 2v5l5 3 5-3v-3m7-4 3 2v5l-5 3-5-3"/>'
+};
+function roleSVG(id){const path=ROLE_ICON_PATHS[id]||ROLE_ICON_PATHS.software;return `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${path}</svg>`}
+const ROLE_CATEGORIES=[...new Set(ROLE_IDS.map(id=>PATHS[id].category||'Software'))];
 function renderRolePicker(){
  const r=PATHS[state.role]||PATHS.frontend;
- $('#rolePickerIcon').textContent=r.icon;
+ $('#rolePickerIcon').innerHTML=roleSVG(state.role);
  $('#rolePickerName').textContent=r.name;
- $('#rolePickerCategory').textContent=r.category||'Core career';
- const q=roleSearch.value.trim().toLowerCase();
- $('#roleCategories').innerHTML=allCategories.map(cat=>`<button type="button" class="role-filter ${roleCategory===cat?'selected':''}" data-role-cat="${escapeHTML(cat)}" aria-pressed="${roleCategory===cat}">${escapeHTML(cat)}</button>`).join('');
- const ids=ROLE_IDS.filter(id=>(roleCategory==='All'||(PATHS[id].category||'Core')===roleCategory)&&(!q||(PATHS[id].name+' '+PATHS[id].description+' '+PATHS[id].skills.map(s=>s[0]).join(' ')).toLowerCase().includes(q)));
- roleList.innerHTML=ids.map(id=>{const x=PATHS[id];return `<button type="button" role="option" aria-selected="${id===state.role}" class="role-option ${id===state.role?'selected':''}" data-select-role="${id}"><span class="role-option-icon">${escapeHTML(x.icon)}</span><span class="role-option-info"><strong>${escapeHTML(x.name)}</strong><small>${escapeHTML(x.description)}</small></span><span class="role-tick">${id===state.role?'✓':'↗'}</span></button>`}).join('')||'<p class="role-none">No roles match. Try a different search.</p>';
+ $('#rolePickerCategory').textContent=r.category||'Software';
+ roleList.innerHTML=ROLE_CATEGORIES.map(cat=>{
+   const members=ROLE_IDS.filter(id=>(PATHS[id].category||'Software')===cat);
+   return `<div class="role-list-section"><div class="role-list-heading">${escapeHTML(cat)}</div>${members.map(id=>{const x=PATHS[id];return `<button type="button" role="option" aria-selected="${id===state.role}" class="role-option ${id===state.role?'selected':''}" data-select-role="${id}"><span class="role-option-icon">${roleSVG(id)}</span><span class="role-option-info"><strong>${escapeHTML(x.name)}</strong><small>${escapeHTML(x.description)}</small></span><span class="role-tick" aria-hidden="true">${id===state.role?'✓':'→'}</span></button>`}).join('')}</div>`;
+ }).join('');
 }
-function setPickerOpen(open){roleMenu.hidden=!open;roleBtn.setAttribute('aria-expanded',String(open));if(open){renderRolePicker();setTimeout(()=>roleSearch.focus(),0)}}
+function setPickerOpen(open){roleMenu.hidden=!open;roleBtn.setAttribute('aria-expanded',String(open));if(open){renderRolePicker();roleList.scrollTop=0}}
 roleBtn.addEventListener('click',()=>setPickerOpen(roleMenu.hidden));
 $('#rolePickerClose').addEventListener('click',()=>setPickerOpen(false));
-roleSearch.addEventListener('input',renderRolePicker);
-$('#roleCategories').addEventListener('click',e=>{const b=e.target.closest('[data-role-cat]');if(!b)return;roleCategory=b.dataset.roleCat;renderRolePicker()});
 roleList.addEventListener('click',e=>{const b=e.target.closest('[data-select-role]');if(!b)return;$('#roleSelect').value=b.dataset.selectRole;$('#roleSelect').dispatchEvent(new Event('change',{bubbles:true}));setPickerOpen(false);roleBtn.focus()});
-roleSearch.addEventListener('keydown',e=>{if(e.key==='Enter'){const b=roleList.querySelector('[data-select-role]');if(b){e.preventDefault();b.click()}}});
+roleList.addEventListener('keydown',e=>{if(e.key!=='ArrowDown'&&e.key!=='ArrowUp')return;const buttons=[...roleList.querySelectorAll('[data-select-role]')];const i=buttons.indexOf(document.activeElement);const next=buttons[i+(e.key==='ArrowDown'?1:-1)]||buttons[e.key==='ArrowDown'?0:buttons.length-1];if(next){e.preventDefault();next.focus()}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!roleMenu.hidden){setPickerOpen(false);roleBtn.focus()}});
 document.addEventListener('click',e=>{if(!roleMenu.hidden&&!e.target.closest('.role-picker'))setPickerOpen(false)});
 const previousRoleUpdate=updateDashboard;
