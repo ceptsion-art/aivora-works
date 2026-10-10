@@ -86,6 +86,53 @@ function showEmailError(error,email=''){
   else{showEmailNotice({type:'error',kicker:'ACCOUNT REQUEST NEEDS ATTENTION',title:existing?'Account already registered':'Could not complete email request',description:existing?'Try signing in, or use Forgot Password if needed.':detail,email,steps:['Check your email address and try again later.','If the issue continues, contact the Aivora admin.']});info(detail)}
 }
 
+// GOOGLE SIGN-IN — uses the same existing Supabase Auth project and saved account data.
+// Adds a visible button without modifying the rest of the signup/password form.
+function installGoogleButton(){
+  const form=$('#loginForm');
+  if(!form||document.getElementById('aivoraGoogleButton'))return;
+  const style=document.createElement('style');
+  style.id='aivora-google-login-css';
+  style.textContent=`
+    .aivora-google-login{margin:17px 0 22px;display:grid;gap:12px}
+    .aivora-google-button{display:flex;align-items:center;justify-content:center;gap:13px;width:100%;min-height:52px;padding:12px 16px;cursor:pointer;border-radius:10px;border:1px solid #de8fe9b0;background:linear-gradient(108deg,#fff9ff 0%,#eedafa 100%);color:#251128;font-family:inherit;font-size:13px;font-weight:800;letter-spacing:.025em;box-shadow:0 8px 25px #9e3ace35;transition:transform .15s,border-color .15s}
+    .aivora-google-button:hover{transform:translateY(-2px);border-color:#ff7bd6}
+    .aivora-google-button:focus-visible{outline:3px solid #fa91da;outline-offset:3px}
+    .aivora-google-button:disabled{opacity:.65;cursor:wait;transform:none}
+    .aivora-google-g{display:inline-grid;place-items:center;width:25px;height:25px;border-radius:50%;background:#fff;font:900 20px/1 Arial,sans-serif;color:#4285f4;box-shadow:inset 0 0 0 1px #ded7ea}
+    .aivora-google-sep{display:flex;align-items:center;gap:13px;color:#ba9ac9;font-size:11px;letter-spacing:.1em;font-weight:700}
+    .aivora-google-sep:before,.aivora-google-sep:after{content:'';height:1px;background:#7f638a66;flex:1}
+    @media(prefers-reduced-motion:reduce){.aivora-google-button{transition:none}}
+  `;
+  document.head.appendChild(style);
+  const wrap=document.createElement('div');
+  wrap.className='aivora-google-login';
+  const button=document.createElement('button');
+  button.type='button';button.id='aivoraGoogleButton';button.className='aivora-google-button';
+  button.setAttribute('aria-label','Continue with your Google account');
+  const badge=document.createElement('span');badge.className='aivora-google-g';badge.setAttribute('aria-hidden','true');badge.textContent='G';
+  const buttonText=document.createElement('span');buttonText.textContent='CONTINUE WITH GOOGLE  ↗';
+  button.append(badge,buttonText);
+  const divider=document.createElement('div');divider.className='aivora-google-sep';divider.textContent='OR USE EMAIL & PASSWORD';
+  wrap.append(button,divider);
+  form.insertAdjacentElement('beforebegin',wrap);
+  button.addEventListener('click',async()=>{
+    button.disabled=true;buttonText.textContent='OPENING GOOGLE SIGN-IN…';
+    try{
+      if(!client)throw Error('Account service is not ready yet. Refresh and try again.');
+      // Uses the same verified Supabase account IDs where automatic email linking applies.
+      // This URL must be in Supabase Auth > URL Configuration > Redirect URLs.
+      const {error}=await client.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+'/?auth_callback=1'}});
+      if(error)throw error;
+    }catch(err){
+      button.disabled=false;buttonText.textContent='CONTINUE WITH GOOGLE  ↗';
+      info('Google sign-in failed: '+(err?.message||'Please try again.'));
+      showEmailNotice({type:'error',kicker:'GOOGLE SIGN-IN',title:'Could not sign in with Google',description:String(err?.message||'Please try again later.'),steps:['Check that Google is enabled in Supabase Auth > Sign In / Providers.','If Google displays an access error, check your Google OAuth publishing and scopes.']});
+    }
+  });
+}
+installGoogleButton();
+
 window.AivoraAuth=api;
 $('#signUpButton')?.addEventListener('click',async()=>{const name=$('#demoName').value.trim(),email=$('#demoEmail').value.trim(),password=$('#authPassword').value;
   if(!name||!email||password.length<6){showEmailNotice({type:'error',title:'Complete your signup details',description:'Enter your name, a valid email address and a password with at least 6 characters.'});info('Enter name, email, and a password of at least 6 characters.');return}
@@ -99,5 +146,5 @@ $('#forgotPassword')?.addEventListener('click',async()=>{const email=$('#demoEma
 $('#signOutButton')?.addEventListener('click',()=>api.signOut().catch(e=>info(e.message)));
 $('#updatePasswordButton')?.addEventListener('click',async()=>{const password=$('#authPassword').value;if(password.length<8){info('Use a new password of at least 8 characters.');return}try{if(!client)throw Error('Supabase not configured');const {error}=await client.auth.updateUser({password});if(error)throw error;$('#updatePasswordButton').hidden=true;$('#authPassword').value='';info('Your password has been updated.');}catch(e){info(e.message)}});
 
-async function boot(){try{const r=await fetch('/.netlify/functions/config',{cache:'no-store'});if(!r.ok)throw Error('Account configuration endpoint unavailable');const cfg=await r.json();if(!cfg.url||!cfg.key)throw Error('Supabase URL or publishable key missing in site configuration.');client=createClient(cfg.url,cfg.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});const {data:{session}}=await client.auth.getSession();user=session?.user||null;client.auth.onAuthStateChange((event,session)=>{user=session?.user||null;if(event==='PASSWORD_RECOVERY'){$('#updatePasswordButton').hidden=false;info('Password recovery verified. Enter a new password above.');showEmailNotice({kicker:'RESET LINK VERIFIED',title:'Set your new password',description:'Your password reset link is valid. Enter a NEW password in the password field above, then click SET NEW PASSWORD.',steps:['Choose a strong password of at least 8 characters.','Click SET NEW PASSWORD to finish.']})}setTimeout(announce,0)});ready=true;info(user?'Signed in as '+user.email:'Ready to sign in or create an account.');announce()}catch(e){info('Setup required: '+e.message);console.warn(e)}}
+async function boot(){try{const r=await fetch('/.netlify/functions/config',{cache:'no-store'});if(!r.ok)throw Error('Account configuration endpoint unavailable');const cfg=await r.json();if(!cfg.url||!cfg.key)throw Error('Supabase URL or publishable key missing in site configuration.');client=createClient(cfg.url,cfg.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});const {data:{session}}=await client.auth.getSession();user=session?.user||null;client.auth.onAuthStateChange((event,session)=>{user=session?.user||null;if(event==='PASSWORD_RECOVERY'){$('#updatePasswordButton').hidden=false;info('Password recovery verified. Enter a new password above.');showEmailNotice({kicker:'RESET LINK VERIFIED',title:'Set your new password',description:'Your password reset link is valid. Enter a NEW password in the password field above, then click SET NEW PASSWORD.',steps:['Choose a strong password of at least 8 characters.','Click SET NEW PASSWORD to finish.']})}setTimeout(announce,0)});ready=true;info(user?'Signed in as '+user.email:'Ready to sign in or create an account.');announce();if(user&&new URLSearchParams(location.search).get('auth_callback')==='1'){history.replaceState(null,'',location.pathname+'#dashboard');window.dispatchEvent(new Event('hashchange'))}}catch(e){info('Setup required: '+e.message);console.warn(e)}}
 boot();
