@@ -97,6 +97,28 @@ COMMON PROBLEMS:
 — Changes not showing after GitHub commit: Vercel → Deployments → Ready, verify files in repository /public (index.html, app.js, styles.css, auth.js), refresh with Ctrl+Shift+R. Do not suggest uploading to root.
 — Progress missing: verify same Supabase account, save sliders/projects, refresh; browser cache/cloud app_state sync might fail; check Supabase RLS and error if available. Don't claim guaranteed sync without checking.
 TROUBLESHOOTING STYLE: First locate the page and button, then provide exactly numbered click-by-click steps. Distinguish what a student can do from what the site admin must configure. If you cannot see live state or logs, say so and request a non-sensitive error message, screenshot, or current page. Never pretend to have clicked buttons or edited account settings.`;
+// Fast, reliable website-navigation help — no extra model round-trip or hallucinated menus.
+// Only explicit Aivora product-support requests get a predefined response.
+const aivoraHelpIndex=[
+ {re:/\b(login|log\s?in|sign\s?in|google|password|sign\s?out|signup|register|account|email|verification)\b/i,txt:'ACCOUNT HELP\n1. Open Aivora → Sign In. For Google login, choose CONTINUE WITH GOOGLE. For an existing password account, enter email and password, then SIGN IN.\n2. If email verification is rate-limited, avoid repeated retries; the admin can configure a sender in Supabase.\n3. For password reset, use FORGOT PASSWORD and check your inbox.\n4. To end your session, click SIGN OUT, then refresh to confirm you stay on the login page.\nIf you see an error, share its text (never passwords or tokens).'},
+ {re:/\b(skills?|quizzes?|practice|lessons?|learning)\b/i,txt:'SKILLS AND LEARNING\n1. Sign in → Career dashboard → Skills, lessons & quizzes.\n2. Select your target role and rate the six skills using the sliders.\n3. Click SAVE ASSESSMENT and wait for CLOUD SAVED; if it says SAVE FAILED, use RETRY SYNC.\n4. Expand Learn a skill, choose a lesson, read the example and answer its quiz.\n5. Expand Test your knowledge for a graded four-question check-in. Review explanations and repeat to improve.'},
+ {re:/\b(roadmap|plan|30.day|milestones?)\b/i,txt:'ROADMAP AND 30-DAY AI PLAN\n1. Sign in → Roadmap & AI plan.\n2. Pick your career role. Mark a milestone complete only when finished.\n3. Expand Generate your personalized 30-day plan.\n4. Enter your level, weekly hours, and goal; click GENERATE MY 30-DAY PLAN.\n5. If Gemini is unavailable, the page may show a labeled starter template instead of personalized AI results. Check Vercel function logs if errors continue.'},
+ {re:/\b(project|portfolio|showcase)\b/i,txt:'PROJECTS AND PORTFOLIO\n1. Sign in → Project studio, add a real project and optional public evidence link.\n2. Tick project milestones when they are genuinely complete.\n3. Open Portfolio builder & checklist; enter name, headline, about and public links.\n4. Preview, then click DOWNLOAD WEBSITE to get a working HTML portfolio file.\n5. Hosting is separate: upload the exported HTML file to a static host; Aivora does not auto-publish it.'},
+ {re:/\b(github|repository|repo)\b/i,txt:'GITHUB INSIGHTS\n1. Sign in → GitHub insights.\n2. Enter a PUBLIC GitHub username or repository URL.\n3. Click ANALYZE. The app reads public metadata only, not private repositories.\n4. If it fails, verify the username/URL, public repository visibility, and API rate limits. Never paste a GitHub token into the form.'},
+ {re:/\b(interview|resume)\b/i,txt:'INTERVIEW AND RESUME\n1. For an interview, choose Interview studio; answer a displayed question, then click REVIEW MY ANSWER.\n2. A Gemini review is available when the server is configured. The labeled fallback is only structural feedback.\n3. For resumes, open Resume review and paste text. LOCAL RESUME CHECK finds basic keywords.\n4. For AI feedback, remove identifying details, tick consent and click ASK GEMINI TO REVIEW. It is guidance, not certified ATS scoring.'},
+ {re:/\b(job|application|internship|vacanc)\b/i,txt:'JOBS AND APPLICATIONS\n1. Sign in → Jobs & applications.\n2. Paste a real internship description and use COMPARE SKILLS to highlight a keyword gap.\n3. Add the company/role/status to your application tracker, update its status as you proceed, and export CSV.\n4. This tool does NOT fetch live vacancies; use real company career pages for openings.'},
+ {re:/\b(save|sync|progress|cloud|not working|issue|error|bug)\b/i,txt:'SAVE AND WEBSITE TROUBLESHOOTING\n1. Sign in using the SAME Google/email account you used before.\n2. Make a small change in your Career dashboard and check the CLOUD SAVED indicator.\n3. If SAVE FAILED appears, click RETRY SYNC and optionally BACKUP to download your progress JSON.\n4. If a feature fails, note the page and the exact on-screen error. The site admin should inspect Vercel function logs and Supabase app_state RLS.\n5. Do not send anyone passwords, API keys, or authentication tokens.'}
+];
+function knownWebsiteHelp(message){
+ const q=String(message||'').toLowerCase();
+ const explicit=/\baivora\b|\b(this|your|the) (app|site|website)\b|\bon (aivora|your site)\b/.test(q);
+ const help=/\b(how|where|help|guide|fix|trouble|problem|issue|not working|error|use|navigate|click|open|save|sync|sign out|log in|login)\b/.test(q);
+ if(!explicit||!help||q.length>330)return null;
+ // If a student also requests broad unrelated content, leave the scope classifier in control.
+ if(/\b(recipe|biryani|movie|cricket|game|gaming|politics|celebrity|weather)\b/i.test(q))return null;
+ for(const item of aivoraHelpIndex)if(item.re.test(q))return item.txt;
+ return 'AIVORA WEBSITE TOUR\n1. Sign in to reach Career dashboard.\n2. Use Skills, lessons & quizzes to assess skills and practice.\n3. Use Roadmap & AI plan to track milestones and generate a study plan.\n4. Use Project studio and Portfolio builder to document work.\n5. Use Interview studio, Resume review, GitHub insights, and Jobs & applications to prepare for placements.\n6. The status bar shows CLOUD SAVED, SYNCING, or SAVE FAILED.\nTell me which Aivora page is confusing and what you see; I can guide you through its buttons.';
+}
 const topicGate=`You are an independent, strict topic classifier for a BTech student CAREER AND EDUCATION assistance application called Aivora.
 Classify the user's LATEST request; prior context is only to resolve short follow-ups.
 Return STRICT JSON with exactly {"decision":"allow"} or {"decision":"deny"} or {"decision":"greeting"}. Do not answer the request.
@@ -148,6 +170,11 @@ async function handler(request){
  const skills=Array.isArray(body.skills)?body.skills.slice(0,6).map(s=>({name:clean(s?.name,55),rating:Math.max(0,Math.min(5,Number(s?.rating)||0))})):[];
  const history=(Array.isArray(body.history)?body.history:[]).slice(-6).filter(x=>['user','model'].includes(x?.role)&&typeof x.text==='string').map(x=>({role:x.role,parts:[{text:clean(x.text,650)}]}));
  try{
+  // Verified, read-only help for well-known Aivora UI issues works even during Gemini rate limits.
+  if(type==='mentor'){
+   const guide=knownWebsiteHelp(message);
+   if(guide)return reply(200,{reply:guide,restricted:false,source:'verified-app-guide'});
+  }
   // Server-side topic check: the front end cannot disable this filter.
   if(type==='mentor'){
    const previous=(history.slice(-2).map(h=>h.parts[0].text).join(' / ')||'none').slice(0,700);
