@@ -522,7 +522,25 @@ for(const btn of document.querySelectorAll('.dash-nav[data-tool]')){
 }
 
 // Dashboard tools + useful state.
-function openTool(tool,changeHash=true){document.querySelector('.dash-heading')?.classList.toggle('dashboard-overview-heading',tool==='overview');if(tool==='showcase'){showShowcaseFields();renderShowcase()}if(tool==='momentum')renderMomentum();$$('.dash-nav').forEach(el=>el.classList.toggle('active',el.dataset.tool===tool));$$('.tool-panel').forEach(el=>el.classList.toggle('active',el.id==='tool-'+tool));if(changeHash)location.hash='#dashboard/'+tool}
+const MERGED_ROUTES={momentum:'overview',learn:'skills',practice:'skills',plan:'roadmap',portfolio:'showcase'};
+function expandMerged(tool){
+ const target=document.getElementById('merged-'+tool);
+ if(target){target.open=true;if(tool==='momentum')renderMomentum();}
+}
+function openTool(tool,changeHash=true){
+ const desired=tool,primary=MERGED_ROUTES[tool]||tool;
+ document.querySelector('.dash-heading')?.classList.toggle('dashboard-overview-heading',primary==='overview');
+ if(primary==='showcase'){showShowcaseFields();renderShowcase()}
+ if(primary==='overview')renderMomentum();
+ $$('.dash-nav').forEach(el=>el.classList.toggle('active',el.dataset.tool===primary));
+ $$('.tool-panel').forEach(el=>el.classList.toggle('active',el.id==='tool-'+primary));
+ expandMerged(desired);
+ if(changeHash){
+  const newHash='#dashboard/'+desired;
+  if(location.hash!==newHash)location.hash=newHash;
+  else if(desired!==primary){const target=document.getElementById('merged-'+desired);target?.scrollIntoView({behavior:'smooth',block:'nearest'})}
+ }
+}
 $$('.dash-nav').forEach(b=>b.addEventListener('click',()=>openTool(b.dataset.tool)));
 $$('[data-tool-jump]').forEach(b=>b.addEventListener('click',()=>openTool(b.dataset.toolJump)));
 function getRatings(){const arr=state.ratings[state.role];return Array.isArray(arr)&&arr.length===6?arr:[0,0,0,0,0,0]}
@@ -617,7 +635,7 @@ async function callAI(type,message,extra={}){
  if(!token)throw new Error('Please sign in to use Aivora AI.');
  const controller=new AbortController(), timeout=setTimeout(()=>controller.abort(),65000);
  try{
-  const response=await fetch('/api/mentor',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},signal:controller.signal,body:JSON.stringify({type,role:roleLabel().name,message,skills:roleLabel().skills.map((skill,i)=>({name:skill[0],rating:getRatings()[i]})),progress:getCompleted().filter(Boolean).length,history:type==='mentor'?mentorTurns.slice(-8):[],...extra})});
+  const response=await fetch('/api/mentor',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},signal:controller.signal,body:JSON.stringify({type,role:roleLabel().name,message,skills:roleLabel().skills.map((skill,i)=>({name:skill[0],rating:getRatings()[i]})),progress:getCompleted().filter(Boolean).length,currentTool:(location.hash.split('/')[1]||'overview').slice(0,30),history:type==='mentor'?mentorTurns.slice(-8):[],...extra})});
   const data=await response.json().catch(()=>({}));
   if(!response.ok)throw new Error(data.error||('AI server error '+response.status));
   if(typeof data.reply!=='string'||!data.reply.trim())throw new Error('No AI reply returned');
@@ -659,12 +677,20 @@ function resetChat(){
 }
 async function sendMentorMessage(q){
  if(!q?.trim())return;
- q=q.trim().slice(0,1200);addChat('user',q);const pending=addChat('ai','Thinking about your next move…');
+ q=q.trim().slice(0,3500);addChat('user',q);const pending=addChat('ai','Working through your question…');
  const btn=$('#mentorForm button');btn.disabled=true;$('#mentorInput').disabled=true;
  try{const answer=await callAI('mentor',q);pending.querySelector('p').textContent=answer;mentorTurns.push({role:'user',text:q},{role:'model',text:answer});mentorTurns=mentorTurns.slice(-8);$('#mentorMode').textContent='✳ GEMINI LIVE ANSWER';$('#dashStatus').textContent='✳ GEMINI AI CONNECTED'}
  catch(e){pending.querySelector('p').textContent='Aivora AI is currently unavailable: '+e.message;$('#mentorMode').textContent='AI CONNECTION ISSUE'}
  finally{btn.disabled=false;$('#mentorInput').disabled=false;$('#mentorInput').focus();$('#chatLog').scrollTop=$('#chatLog').scrollHeight}
 }
+// Every workspace links to a context-aware Aivora AI guide; no new API key or unsafe HTML.
+const AIVORA_HELP_TITLES={fit:'Career fit quiz',overview:'Career dashboard',skills:'Skills and lessons',roadmap:'Roadmap and AI plan',interview:'Interview studio',resume:'Resume review',projects:'Project studio',github:'GitHub insights',showcase:'Portfolio builder',jobs:'Jobs and applications'};
+document.querySelectorAll('[data-help-tool]').forEach(button=>button.addEventListener('click',()=>{
+ const section=button.dataset.helpTool;
+ const ask=`Guide me step by step through Aivora's ${AIVORA_HELP_TITLES[section]||'website'} page. Explain what each action does, how to save my work, and the common errors users face. My current page is ${section}.`;
+ location.hash='#dashboard/mentor';
+ sendMentorMessage(ask);
+}));
 $('#mentorForm').addEventListener('submit',async e=>{e.preventDefault();const q=$('#mentorInput').value.trim();if(!q)return;$('#mentorInput').value='';await sendMentorMessage(q)});
 $$('[data-prompt]').forEach(b=>b.addEventListener('click',()=>{location.hash='#dashboard/mentor';sendMentorMessage(b.dataset.prompt)}));
 $('#clearConversation').addEventListener('click',()=>{mentorTurns=[];resetChat();toast('Conversation cleared (only in this browser)')});
