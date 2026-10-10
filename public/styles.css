@@ -185,3 +185,32 @@ body{scrollbar-color:#9851ab #160f20}
 :is(button,a,input,select,textarea,[role='option']):focus-visible{outline:2px solid #ffb6ee;outline-offset:3px}
 [hidden]{display:none!important}
 @media(prefers-reduced-motion:reduce){:is(.button,.dash-nav,.role-option,.pricing-card,.spot-card,.stat-card,.product-card,.workspace-panel,.auth-controls button){transition:none!important;transform:none!important}}
+
+
+/* AIVORA FINAL — Fill the desktop viewport without stretching the sidebar past the window. */
+@media (min-width:1100px){
+  .dashboard > .dash-sidebar{
+    position:sticky;
+    top:104px;
+    height:calc(100vh - 122px);
+    height:calc(100dvh - 122px);
+    max-height:calc(100dvh - 122px);
+    overflow-y:auto;
+    scrollbar-gutter:stable;
+  }
+}
+@media (min-width:821px) and (max-width:1099px){
+  .dashboard > .dash-sidebar{
+    position:sticky;
+    top:94px;
+    height:calc(100vh - 112px);
+    height:calc(100dvh - 112px);
+    max-height:calc(100dvh - 112px);
+    overflow-y:auto;
+    scrollbar-gutter:stable;
+  }
+}
+/* On phones the sidebar stays a short horizontal navigation strip. */
+@media (max-width:820px){
+  .dashboard > .dash-sidebar{height:auto;max-height:none;}
+}
