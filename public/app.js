@@ -9,11 +9,424 @@ const PATHS={
   data:{name:'Data Analyst',short:'DATA',title:'DATA\nANALYST',icon:'◈',description:'Find the patterns behind decisions. Turn raw information into insight with SQL, analysis, and clear storytelling.',tags:['SQL','Excel','Python','Dashboards'],skills:[['Excel / Sheets','Analyze data with formulas, pivots, and basic charts.','Build a pivot table dashboard for a sample dataset.'],['SQL','Query, join, filter, and aggregate relational data.','Write queries for a customer sales analysis.'],['Python / Pandas','Explore and clean data reproducibly.','Clean an open dataset and explain your methodology.'],['Data Visualization','Build charts that answer specific business questions.','Make a clean dashboard with clear takeaways.'],['Statistics','Understand sampling, averages, distributions, and tests.','Compare groups and explain confidence carefully.'],['Storytelling','Communicate decisions and limitations clearly.','Present 3 evidence-backed insights from a dataset.']],steps:[['Learn spreadsheets & SQL','Work with pivots, joins, and aggregations.'],['Clean a dataset','Document data issues and transformations.'],['Visualize insight','Create a dashboard that tells a clear story.'],['Build an analytics portfolio','Publish two complete case studies.'],['Practice business cases','Prepare SQL questions and communicate decisions.']],questions:['When would you use a LEFT JOIN instead of an INNER JOIN?','How would you handle missing values in a dataset?','How do you decide which chart best communicates an insight?']},
   cloud:{name:'Cloud Engineer',short:'CLOUD',title:'CLOUD\nENGINEER',icon:'☁',description:'Build the infrastructure behind modern apps. Think Linux, networking, security, automation, and reliable systems.',tags:['Linux','Networking','Cloud','Containers'],skills:[['Linux','Use the command line, permissions, processes, and logs.','Host a basic service on a Linux VM.'],['Networking','Understand DNS, HTTP, TCP/IP, and virtual networks.','Draw and explain a web request path end to end.'],['Cloud Basics','Explore cloud compute, identity, storage, and pricing.','Launch and secure a basic cloud application.'],['Containers','Create reproducible workloads using Docker.','Containerize a simple website or API.'],['Infrastructure as Code','Describe infrastructure in version-controlled files.','Provision a test environment with Terraform.'],['Security & Monitoring','Use least privilege, metrics, and good recovery practices.','Add logs, alerts, and IAM review to your demo.']],steps:[['Get confident with Linux','Practice shell tools, SSH, files and permissions.'],['Understand networks','Study DNS, HTTP, routing, and subnetting.'],['Deploy your first service','Host a small app on a cloud VM.'],['Automate infrastructure','Use Docker, CI/CD, and infrastructure as code.'],['Practice scenario questions','Prepare systems, security, and troubleshooting examples.']],questions:['Explain the difference between a container and a virtual machine.','What happens when DNS cannot resolve a domain?','What does least privilege mean in cloud security?']}
 };
-const IDS=Object.keys(PATHS);
+// Expanded career tracks: each has a distinct six-skill self-assessment, roadmap, and interview practice.
+const EXTENDED_ROLES=
+[
+ {
+  "id": "backend",
+  "name": "Backend Developer",
+  "category": "Software",
+  "icon": "{ }",
+  "description": "Build APIs, services and reliable server-side systems.",
+  "skills": [
+   "Node.js & APIs",
+   "SQL & Data Models",
+   "Authentication",
+   "Testing & Debugging",
+   "Caching & Performance",
+   "Deployment & Monitoring"
+  ],
+  "family": "frontend"
+ },
+ {
+  "id": "fullstack",
+  "name": "Full Stack Developer",
+  "category": "Software",
+  "icon": "◇",
+  "description": "Own an application from user interface to database and deployment.",
+  "skills": [
+   "HTML / CSS",
+   "JavaScript / TypeScript",
+   "React & UI State",
+   "Backend APIs",
+   "Databases",
+   "Deployment & Testing"
+  ],
+  "family": "frontend"
+ },
+ {
+  "id": "mobile",
+  "name": "Mobile App Developer",
+  "category": "Software",
+  "icon": "▣",
+  "description": "Create responsive native and cross-platform mobile experiences.",
+  "skills": [
+   "Kotlin or Swift",
+   "Flutter / React Native",
+   "Mobile UI & Navigation",
+   "Device APIs",
+   "App Testing",
+   "Publishing Apps"
+  ],
+  "family": "frontend"
+ },
+ {
+  "id": "software",
+  "name": "Software Engineer",
+  "category": "Software",
+  "icon": "⌘",
+  "description": "Design, implement, test and maintain general-purpose software systems.",
+  "skills": [
+   "Programming Fundamentals",
+   "Data Structures",
+   "Algorithms",
+   "Software Design",
+   "Unit Testing",
+   "Version Control"
+  ],
+  "family": "frontend"
+ },
+ {
+  "id": "security",
+  "name": "Cybersecurity Analyst",
+  "category": "Security & Cloud",
+  "icon": "⬡",
+  "description": "Protect systems through secure design, monitoring and investigation.",
+  "skills": [
+   "Networking & TCP/IP",
+   "Linux & Windows",
+   "Security Fundamentals",
+   "Threat Monitoring",
+   "Incident Response",
+   "Secure Configuration"
+  ],
+  "family": "cloud"
+ },
+ {
+  "id": "pentest",
+  "name": "Ethical Security Tester",
+  "category": "Security & Cloud",
+  "icon": "♢",
+  "description": "Practice authorized testing and report security weaknesses responsibly.",
+  "skills": [
+   "Networking Basics",
+   "Web Security",
+   "Linux Tools",
+   "Security Testing Ethics",
+   "Vulnerability Reporting",
+   "Defensive Remediation"
+  ],
+  "family": "cloud"
+ },
+ {
+  "id": "devops",
+  "name": "DevOps Engineer",
+  "category": "Security & Cloud",
+  "icon": "↗",
+  "description": "Automate the path from development to reliable production systems.",
+  "skills": [
+   "Linux & Bash",
+   "Git / CI Pipelines",
+   "Containers & Docker",
+   "Cloud Deployments",
+   "Infrastructure as Code",
+   "Observability"
+  ],
+  "family": "cloud"
+ },
+ {
+  "id": "sre",
+  "name": "Site Reliability Engineer",
+  "category": "Security & Cloud",
+  "icon": "∞",
+  "description": "Improve availability and performance using software and system thinking.",
+  "skills": [
+   "Linux & Networking",
+   "Monitoring & Alerts",
+   "Automation & Scripting",
+   "Incident Management",
+   "Scalability",
+   "SLOs & Reliability"
+  ],
+  "family": "cloud"
+ },
+ {
+  "id": "network",
+  "name": "Network Engineer",
+  "category": "Security & Cloud",
+  "icon": "⌁",
+  "description": "Design, troubleshoot and secure network connectivity.",
+  "skills": [
+   "TCP/IP & Subnets",
+   "Routing & Switching",
+   "DNS & HTTP",
+   "Wireless Networks",
+   "Firewalls & ACLs",
+   "Network Troubleshooting"
+  ],
+  "family": "cloud"
+ },
+ {
+  "id": "architect",
+  "name": "Cloud Solutions Architect",
+  "category": "Security & Cloud",
+  "icon": "☁",
+  "description": "Translate requirements into secure, reliable, cost-aware cloud designs.",
+  "skills": [
+   "Compute & Storage",
+   "Networking & Identity",
+   "Cloud Architecture",
+   "Security & Compliance",
+   "Cost Optimization",
+   "Resilience & Backup"
+  ],
+  "family": "cloud"
+ },
+ {
+  "id": "scientist",
+  "name": "Data Scientist",
+  "category": "Data & AI",
+  "icon": "✦",
+  "description": "Explore data, build models and communicate evidence-based results.",
+  "skills": [
+   "Python & Pandas",
+   "Probability & Statistics",
+   "Data Preparation",
+   "Machine Learning",
+   "Experiment Design",
+   "Model Communication"
+  ],
+  "family": "ai"
+ },
+ {
+  "id": "dataeng",
+  "name": "Data Engineer",
+  "category": "Data & AI",
+  "icon": "▤",
+  "description": "Build data pipelines and trustworthy analytics infrastructure.",
+  "skills": [
+   "SQL & Data Models",
+   "Python ETL",
+   "Data Warehouses",
+   "Pipelines & Scheduling",
+   "Data Quality",
+   "Cloud Data Platforms"
+  ],
+  "family": "data"
+ },
+ {
+  "id": "bi",
+  "name": "BI Analyst",
+  "category": "Data & AI",
+  "icon": "◈",
+  "description": "Create reporting and dashboards that support real decisions.",
+  "skills": [
+   "SQL Queries",
+   "Power BI / Tableau",
+   "Metrics & KPIs",
+   "Data Modelling",
+   "Dashboard Design",
+   "Insight Storytelling"
+  ],
+  "family": "data"
+ },
+ {
+  "id": "nlp",
+  "name": "NLP Engineer",
+  "category": "Data & AI",
+  "icon": "✳",
+  "description": "Build text-focused machine learning applications and evaluate them.",
+  "skills": [
+   "Python",
+   "Text Preprocessing",
+   "Embeddings",
+   "Transformers",
+   "Model Evaluation",
+   "Responsible AI"
+  ],
+  "family": "ai"
+ },
+ {
+  "id": "prompt",
+  "name": "AI Applications Engineer",
+  "category": "Data & AI",
+  "icon": "✧",
+  "description": "Build useful applications powered by language models and retrieval.",
+  "skills": [
+   "JavaScript or Python",
+   "Prompt Design",
+   "LLM APIs",
+   "Retrieval & RAG",
+   "Evaluation & Safety",
+   "App Deployment"
+  ],
+  "family": "ai"
+ },
+ {
+  "id": "ux",
+  "name": "UI / UX Designer",
+  "category": "Design & Product",
+  "icon": "◉",
+  "description": "Research and craft intuitive digital experiences.",
+  "skills": [
+   "User Research",
+   "Information Architecture",
+   "Wireframing",
+   "Figma Prototyping",
+   "Usability Testing",
+   "Design Systems"
+  ],
+  "family": "frontend"
+ },
+ {
+  "id": "product",
+  "name": "Product Manager",
+  "category": "Design & Product",
+  "icon": "◎",
+  "description": "Identify user needs and organize teams around measurable product outcomes.",
+  "skills": [
+   "User Discovery",
+   "Problem Prioritization",
+   "Product Roadmaps",
+   "Metrics & Analytics",
+   "Stakeholder Communication",
+   "Experiments"
+  ],
+  "family": "data"
+ },
+ {
+  "id": "qa",
+  "name": "QA Automation Engineer",
+  "category": "Design & Product",
+  "icon": "✓",
+  "description": "Improve product quality through reliable automated testing.",
+  "skills": [
+   "Test Design",
+   "JavaScript / Python",
+   "UI Automation",
+   "API Testing",
+   "CI Integration",
+   "Bug Reporting"
+  ],
+  "family": "frontend"
+ },
+ {
+  "id": "games",
+  "name": "Game Developer",
+  "category": "Creative Tech",
+  "icon": "◆",
+  "description": "Create interactive game mechanics, systems and player experiences.",
+  "skills": [
+   "C# or C++",
+   "Unity / Unreal",
+   "Game Physics",
+   "Gameplay Systems",
+   "Performance",
+   "Playtesting"
+  ],
+  "family": "frontend"
+ },
+ {
+  "id": "arvr",
+  "name": "AR / VR Developer",
+  "category": "Creative Tech",
+  "icon": "◐",
+  "description": "Build immersive experiences for spatial and extended reality.",
+  "skills": [
+   "3D Math Basics",
+   "Unity / WebXR",
+   "Spatial UI",
+   "Input & Tracking",
+   "Performance",
+   "User Comfort"
+  ],
+  "family": "frontend"
+ },
+ {
+  "id": "robotics",
+  "name": "Robotics Engineer",
+  "category": "Hardware & IoT",
+  "icon": "⚙",
+  "description": "Connect sensors, control algorithms and mechanical systems.",
+  "skills": [
+   "Python or C++",
+   "Sensors & Actuators",
+   "Control Basics",
+   "ROS Fundamentals",
+   "Simulation",
+   "Robot Testing"
+  ],
+  "family": "cloud"
+ },
+ {
+  "id": "embedded",
+  "name": "Embedded Systems Engineer",
+  "category": "Hardware & IoT",
+  "icon": "▧",
+  "description": "Program reliable software for microcontrollers and real-world devices.",
+  "skills": [
+   "C / C++",
+   "Microcontrollers",
+   "Digital Electronics",
+   "Communication Protocols",
+   "Debugging Hardware",
+   "Firmware Testing"
+  ],
+  "family": "cloud"
+ },
+ {
+  "id": "iot",
+  "name": "IoT Developer",
+  "category": "Hardware & IoT",
+  "icon": "⌁",
+  "description": "Create connected devices that collect, process and present data.",
+  "skills": [
+   "Microcontrollers",
+   "Sensors",
+   "MQTT & Networking",
+   "Python / C++",
+   "Cloud Integration",
+   "Device Security"
+  ],
+  "family": "cloud"
+ },
+ {
+  "id": "blockchain",
+  "name": "Blockchain Developer",
+  "category": "Emerging Tech",
+  "icon": "⬢",
+  "description": "Understand distributed ledgers and build transparent on-chain prototypes.",
+  "skills": [
+   "Smart Contract Basics",
+   "Solidity",
+   "Cryptographic Fundamentals",
+   "Web3 Integration",
+   "Smart Contract Testing",
+   "Security & Audits"
+  ],
+  "family": "frontend"
+ }
+];
+for(const role of EXTENDED_ROLES){
+ const skills=role.skills.map((title,i)=>[
+  title,
+  `Learn the concepts and core workflows of ${title} for ${role.name}. Practice with small examples before taking on a full project.`,
+  `Build and document a hands-on ${title} exercise with a working example and brief explanation.`
+ ]);
+ const stepTitles=['Learn the fundamentals','Practice core tools','Build practical skills','Ship a portfolio project','Prepare and apply'];
+ const steps=[
+  [stepTitles[0],`Start with ${role.skills[0]} and ${role.skills[1]}; take notes and do beginner exercises.`],
+  [stepTitles[1],`Practice ${role.skills[2]} with small, repeatable tasks.`],
+  [stepTitles[2],`Use ${role.skills[3]} and ${role.skills[4]} to solve a realistic mini problem.`],
+  [stepTitles[3],`Build an end-to-end ${role.name} project applying ${role.skills[5]}; publish evidence and explain tradeoffs.`],
+  [stepTitles[4],`Review ${role.name} fundamentals, practice explanations and prepare relevant internship applications.`]
+ ];
+ PATHS[role.id]={...role,short:role.name.replace(/[^A-Za-z ]/g,'').split(' ').map(w=>w[0]).join('').slice(0,5).toUpperCase(),title:role.name.toUpperCase(),tags:role.skills.slice(0,4),skills,steps,questions:[
+  `What is ${role.skills[0]} and how is it used in a ${role.name} role?`,
+  `Explain a practical problem you could solve with ${role.skills[2]}.`,
+  `How would you test and present a project using ${role.skills[5]}?`
+ ]};
+}
+for(const id of ['frontend','ai','data','cloud']){PATHS[id].family=id;PATHS[id].category=id==='cloud'?'Security & Cloud':id==='data'||id==='ai'?'Data & AI':'Software';}
+// Four flagship atlas planets and fit-quiz archetypes remain separate from all selectable dashboard roles.
+const IDS=['frontend','ai','data','cloud'];
+const ROLE_IDS=Object.keys(PATHS);
+for(const id of ROLE_IDS){if(!document.querySelector(`#networkRole option[value="${id}"]`)){$('#networkRole').add(new Option(PATHS[id].name,id))}if(!document.querySelector(`#roleSelect option[value="${id}"]`)){$('#roleSelect').add(new Option(PATHS[id].name,id))}}
+
 const PHASES=[['DISCOVER YOUR DIRECTION.','Choose a path based on your interests, strengths, and what you enjoy building.','Compare the four career tracks in the atlas.'],['TURN GAPS INTO A PLAN.','Build foundations one skill at a time. Focus on what employers actually expect in your chosen field.','Complete your skill self-assessment.'],['MAKE SOMETHING REAL.','Projects make your learning visible. Move beyond tutorials and solve a problem end to end.','Finish and publish one meaningful project.'],['TELL YOUR STORY.','Practice technical answers, revisit fundamentals, and explain your decisions with confidence.','Run a mock interview and review your resume.'],['TAKE THE NEXT STEP.','Apply thoughtfully, gather feedback, and improve your portfolio over time.','Make a list of internship opportunities and follow up.']];
-let state={role:'frontend',ratings:{},completed:{},profile:null,practice:{},projects:{},portfolio:{},applications:[]};
+let state={role:'frontend',ratings:{},completed:{},profile:null,practice:{},projects:{},portfolio:{},applications:[],learning:{done:{},attempts:{}},activity:{},showcase:{}};
 // Never read another student's browser cache before a verified session exists.
-const freshState=()=>({role:'frontend',ratings:{},completed:{},profile:null,practice:{},projects:{},portfolio:{},applications:[]});
+const freshState=()=>({role:'frontend',ratings:{},completed:{},profile:null,practice:{},projects:{},portfolio:{},applications:[],learning:{done:{},attempts:{}},activity:{},showcase:{}});
 function persist(){
  const userId=window.AivoraAuth?.currentUserId?.();
  if(!userId)return;
@@ -22,8 +435,8 @@ function persist(){
 }
 let toastTimer=0;function toast(message){const node=$('#toast');node.textContent=message;node.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>node.classList.remove('show'),2800)}
 function escapeHTML(s){return String(s).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
-function toolFromHash(){const h=decodeURIComponent(location.hash.slice(1)||'home');const path=h.split('/');return {page:['home','product','explore','how','pricing','login','dashboard'].includes(path[0])?path[0]:'home',tool:['fit','overview','skills','plan','roadmap','interview','resume','mentor','practice','projects','github','portfolio','jobs'].includes(path[1])?path[1]:'overview'}}
-function route(){const {page,tool}=toolFromHash();$$('.view').forEach(el=>el.classList.toggle('active',el.id==='view-'+page));$$('[data-link]').forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+page));const menu=$('#mobileMenu');menu.classList.remove('open');$('#menuToggle').setAttribute('aria-expanded','false');if(page==='dashboard'&&!window.AivoraAuth?.isLoggedIn()){location.hash='#login';return}if(page==='dashboard')openTool(tool,false);window.scrollTo({top:0,behavior:'instant'});document.title='Aivora AI — '+({home:'Design Your Next Move',product:'Product',explore:'Interactive Career Space',how:'How It Works',pricing:'Pricing — Demo',login:'Student Login',dashboard:'Your Workspace'}[page]);observeReveals();if(page==='explore'){renderNetwork();setJourney(currentStep);setTimeout(()=>{resizeAtlas();placePlanets()},55)}}
+function toolFromHash(){const h=decodeURIComponent(location.hash.slice(1)||'home');const path=h.split('/');return {page:['home','product','explore','how','pricing','login','dashboard'].includes(path[0])?path[0]:'home',tool:['fit','overview','skills','plan','roadmap','interview','resume','mentor','practice','projects','github','portfolio','jobs','learn','momentum','showcase'].includes(path[1])?path[1]:'overview'}}
+function route(){const {page,tool}=toolFromHash();document.querySelector('.dash-heading')?.classList.toggle('dashboard-overview-heading',tool==='overview');$$('.view').forEach(el=>el.classList.toggle('active',el.id==='view-'+page));$$('[data-link]').forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+page));const menu=$('#mobileMenu');menu.classList.remove('open');$('#menuToggle').setAttribute('aria-expanded','false');if(page==='dashboard'&&!window.AivoraAuth?.isLoggedIn()){location.hash='#login';return}if(page==='dashboard')openTool(tool,false);window.scrollTo({top:0,behavior:'instant'});document.title='Aivora AI — '+({home:'Design Your Next Move',product:'Product',explore:'Interactive Career Space',how:'How It Works',pricing:'Pricing — Demo',login:'Student Login',dashboard:'Your Workspace'}[page]);observeReveals();if(page==='explore'){renderNetwork();setJourney(currentStep);setTimeout(()=>{resizeAtlas();placePlanets()},55)}}
 window.addEventListener('hashchange',route);
 $('#menuToggle').addEventListener('click',()=>{const open=$('#mobileMenu').classList.toggle('open');$('#menuToggle').setAttribute('aria-expanded',String(open))});
 $('#mobileMenu').addEventListener('click',e=>{if(e.target.closest('a')){$('#mobileMenu').classList.remove('open')}});
@@ -83,8 +496,33 @@ function renderNetworkNodesHighlight(){const nodes=$$('#networkSvg .graph-node')
 $('#networkRole').addEventListener('change',()=>{networkIndex=0;renderNetwork()});
 let currentStep=0;function setJourney(i){currentStep=i;const item=PHASES[i];$$('[data-step]').forEach(el=>{el.classList.toggle('active',Number(el.dataset.step)===i);el.setAttribute('aria-pressed',String(Number(el.dataset.step)===i))});$('#journeyPhase').textContent='PHASE '+String(i+1).padStart(2,'0')+' / 05';$('#journeyTitle').textContent=item[0];$('#journeyDescription').textContent=item[1];$('#journeyTip').textContent=item[2]}
 $$('[data-step]').forEach(el=>el.addEventListener('click',()=>setJourney(Number(el.dataset.step))));
+
+// Consistent vector navigation icons: crisp at every desktop/mobile size.
+const AIVORA_NAV_ICONS={
+ fit:'<circle cx="11" cy="11" r="8"/><path d="m11 6 2 5-5 2 3-7Z"/><path d="m14 13-3 5-2-5"/>',
+ overview:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+ skills:'<path d="M4 18v-6m0-4V6M12 18v-3m0-4V6M20 18v-6m0-4V6"/><path d="M1 12h6M9 15h6M17 12h6"/>',
+ plan:'<calendar/><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18M8 15h4M8 18h7"/>',
+ roadmap:'<circle cx="6" cy="18" r="2"/><circle cx="18" cy="6" r="2"/><path d="M8 18h4a6 6 0 0 0 6-6V8M9 6H5v4"/>',
+ interview:'<path d="M4 6h16v11H9l-5 4V6Z"/><path d="M8 10h8M8 13h5"/>',
+ resume:'<path d="M7 3h7l5 5v13H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>',
+ mentor:'<path d="m12 3 2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5L12 3Z"/><path d="m19 3 1 2m-17 14 1 2"/>',
+ learn:'<path d="M3 5c4-2 7-1 9 1 2-2 5-3 9-1v14c-4-2-7-1-9 1-2-2-5-3-9-1V5Z"/><path d="M12 6v14"/>',
+ momentum:'<path d="m3 17 5-5 4 3 8-9M15 6h5v5"/><path d="M3 21h18"/>',
+ practice:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',
+ projects:'<rect x="3" y="7" width="18" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 12h18"/>',
+ github:'<path d="M9 19c-5 2-5-3-7-3m14 6v-3.5a3 3 0 0 0-.7-2.1c3.1-.4 5.7-1.4 5.7-6.1 0-1.3-.4-2.3-1.2-3.2.2-.8.4-2-.2-3.1 0 0-1 0-3 1.6a10 10 0 0 0-6 0C8.6 3 7.6 3 7.6 3c-.6 1.1-.4 2.3-.2 3.1C6.6 7 6.2 8 6.2 9.3c0 4.7 2.6 5.7 5.7 6.1A3 3 0 0 0 11 17.5V22"/>',
+ portfolio:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 9h4M7 13h10M7 17h10M15 9h2"/>',
+ showcase:'<rect x="2" y="4" width="20" height="16" rx="2"/><path d="M2 9h20M8 13l-2 2 2 2M16 13l2 2-2 2M13 12l-2 6"/>',
+ jobs:'<path d="M3 8h18v12H3zM8 8V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v3M3 13h18M10 13v3h4v-3"/>'
+};
+for(const btn of document.querySelectorAll('.dash-nav[data-tool]')){
+ const glyph=AIVORA_NAV_ICONS[btn.dataset.tool],slot=btn.querySelector('span:first-child');
+ if(slot&&glyph)slot.innerHTML=`<svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">${glyph}</svg>`;
+}
+
 // Dashboard tools + useful state.
-function openTool(tool,changeHash=true){$$('.dash-nav').forEach(el=>el.classList.toggle('active',el.dataset.tool===tool));$$('.tool-panel').forEach(el=>el.classList.toggle('active',el.id==='tool-'+tool));if(changeHash)location.hash='#dashboard/'+tool}
+function openTool(tool,changeHash=true){document.querySelector('.dash-heading')?.classList.toggle('dashboard-overview-heading',tool==='overview');if(tool==='showcase'){showShowcaseFields();renderShowcase()}if(tool==='momentum')renderMomentum();$$('.dash-nav').forEach(el=>el.classList.toggle('active',el.dataset.tool===tool));$$('.tool-panel').forEach(el=>el.classList.toggle('active',el.id==='tool-'+tool));if(changeHash)location.hash='#dashboard/'+tool}
 $$('.dash-nav').forEach(b=>b.addEventListener('click',()=>openTool(b.dataset.tool)));
 $$('[data-tool-jump]').forEach(b=>b.addEventListener('click',()=>openTool(b.dataset.toolJump)));
 function getRatings(){const arr=state.ratings[state.role];return Array.isArray(arr)&&arr.length===6?arr:[0,0,0,0,0,0]}
@@ -96,8 +534,35 @@ function updateScore(){const score=readiness();$('#skillScore').textContent=scor
 $('#saveSkills').addEventListener('click',()=>{persist();toast('Skill profile saved to your account')});
 function renderRoadmap(){const done=getCompleted();$('#roadmapProgress').textContent=done.filter(Boolean).length+' / 5 COMPLETE';$('#roadmapFill').style.width=done.filter(Boolean).length*20+'%';$('#roadmapSteps').innerHTML=roleLabel().steps.map(([title,desc],i)=>`<label class="roadstep ${done[i]?'done':''}"><input type="checkbox" data-road="${i}" ${done[i]?'checked':''} aria-label="Complete ${escapeHTML(title)}"><span>${String(i+1).padStart(2,'0')}</span><div><h3>${escapeHTML(title)}</h3><p>${escapeHTML(desc)}</p></div></label>`).join('');$$('[data-road]').forEach(inp=>inp.addEventListener('change',()=>{const a=getCompleted().slice();a[Number(inp.dataset.road)]=inp.checked;state.completed[state.role]=a;persist();renderRoadmap();updateOverview();renderDNA();toast(inp.checked?'Milestone completed ✳':'Milestone marked incomplete')}))}
 function updateOverview(){const score=readiness(),steps=getCompleted().filter(Boolean).length;$('#overviewScore').innerHTML=score+'<span>%</span>';$('#overviewScoreNote').textContent=score===0?'Rate your skills to see your signal':score>=80?'Strong self-reported progress':'Keep improving your key skills';$('#overviewMeter').style.width=score+'%';$('#overviewSteps').innerHTML=steps+'<span>/5</span>';$('#overviewStepsMeter').style.width=(steps*20)+'%';$('#overviewTrack').textContent=roleLabel().short;$('#overviewMainTitle').textContent=score===0?'YOUR CAREER STARTS HERE.':score>=80?'YOU HAVE REAL MOMENTUM.':'MAKE YOUR NEXT MOVE COUNT.';$('#overviewMainText').textContent=score===0?'Start with a self-assessment to turn career uncertainty into an action plan.':`Your current self-reported readiness is ${score}%. Move from self-ratings to evidence by building and showcasing a project.`;}
-function updateDashboard(){if(!IDS.includes(state.role))state.role='frontend';$('#roleSelect').value=state.role;$('#networkRole').value=state.role;const name=state.profile?.name?.trim();$('#dashGreeting').innerHTML=name?`HEY, ${escapeHTML(name.toUpperCase())}.<br><em>YOUR NEXT MOVE.</em>`:'WELCOME TO<br><em>YOUR LAUNCHPAD.</em>';updateOverview();renderSliders();renderRoadmap();setQuestion(0);renderNetwork();refreshExtras()}
-$('#roleSelect').addEventListener('change',e=>{state.role=e.target.value;persist();updateDashboard();toast('Switched to '+roleLabel().name)});
+function updateDashboard(){if(!ROLE_IDS.includes(state.role))state.role='frontend';$('#roleSelect').value=state.role;$('#networkRole').value=state.role;const name=state.profile?.name?.trim();$('#dashGreeting').textContent=name?`Welcome back, ${name.slice(0,35)}.`:'Your personal workspace.';updateOverview();renderSliders();renderRoadmap();setQuestion(0);renderNetwork();refreshExtras();renderRolePicker()}
+$('#roleSelect').addEventListener('change',e=>{state.role=e.target.value;persist();updateDashboard();renderRolePicker();toast('Switched to '+roleLabel().name)});
+
+// Searchable role explorer with keyboard/escape support. Native select stays in sync for compatibility.
+const roleBtn=$('#rolePickerButton'),roleMenu=$('#rolePickerMenu'),roleSearch=$('#roleSearch'),roleList=$('#rolePickerList');
+let roleCategory='All';
+const allCategories=['All',...new Set(ROLE_IDS.map(id=>PATHS[id].category||'Core'))];
+function renderRolePicker(){
+ const r=PATHS[state.role]||PATHS.frontend;
+ $('#rolePickerIcon').textContent=r.icon;
+ $('#rolePickerName').textContent=r.name;
+ $('#rolePickerCategory').textContent=r.category||'Core career';
+ const q=roleSearch.value.trim().toLowerCase();
+ $('#roleCategories').innerHTML=allCategories.map(cat=>`<button type="button" class="role-filter ${roleCategory===cat?'selected':''}" data-role-cat="${escapeHTML(cat)}" aria-pressed="${roleCategory===cat}">${escapeHTML(cat)}</button>`).join('');
+ const ids=ROLE_IDS.filter(id=>(roleCategory==='All'||(PATHS[id].category||'Core')===roleCategory)&&(!q||(PATHS[id].name+' '+PATHS[id].description+' '+PATHS[id].skills.map(s=>s[0]).join(' ')).toLowerCase().includes(q)));
+ roleList.innerHTML=ids.map(id=>{const x=PATHS[id];return `<button type="button" role="option" aria-selected="${id===state.role}" class="role-option ${id===state.role?'selected':''}" data-select-role="${id}"><span class="role-option-icon">${escapeHTML(x.icon)}</span><span class="role-option-info"><strong>${escapeHTML(x.name)}</strong><small>${escapeHTML(x.description)}</small></span><span class="role-tick">${id===state.role?'✓':'↗'}</span></button>`}).join('')||'<p class="role-none">No roles match. Try a different search.</p>';
+}
+function setPickerOpen(open){roleMenu.hidden=!open;roleBtn.setAttribute('aria-expanded',String(open));if(open){renderRolePicker();setTimeout(()=>roleSearch.focus(),0)}}
+roleBtn.addEventListener('click',()=>setPickerOpen(roleMenu.hidden));
+$('#rolePickerClose').addEventListener('click',()=>setPickerOpen(false));
+roleSearch.addEventListener('input',renderRolePicker);
+$('#roleCategories').addEventListener('click',e=>{const b=e.target.closest('[data-role-cat]');if(!b)return;roleCategory=b.dataset.roleCat;renderRolePicker()});
+roleList.addEventListener('click',e=>{const b=e.target.closest('[data-select-role]');if(!b)return;$('#roleSelect').value=b.dataset.selectRole;$('#roleSelect').dispatchEvent(new Event('change',{bubbles:true}));setPickerOpen(false);roleBtn.focus()});
+roleSearch.addEventListener('keydown',e=>{if(e.key==='Enter'){const b=roleList.querySelector('[data-select-role]');if(b){e.preventDefault();b.click()}}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!roleMenu.hidden){setPickerOpen(false);roleBtn.focus()}});
+document.addEventListener('click',e=>{if(!roleMenu.hidden&&!e.target.closest('.role-picker'))setPickerOpen(false)});
+const previousRoleUpdate=updateDashboard;
+// Add visual role labels after every existing dashboard refresh.
+
 $('#loginForm').addEventListener('submit',async e=>{e.preventDefault();const email=$('#demoEmail').value.trim(),password=$('#authPassword').value;try{await window.AivoraAuth.signIn(email,password);toast('Signed in successfully');location.hash='#dashboard'}catch(err){toast(err.message);$('#authMessage').textContent=err.message}});
 let activeSessionEpoch=0;
 window.addEventListener('aivora-session',async e=>{
@@ -113,7 +578,7 @@ window.addEventListener('aivora-session',async e=>{
  }
  updateDashboard();
 });
-$('#resetProfile').addEventListener('click',()=>{if(!window.confirm('Reset your saved career progress?'))return;state={role:'frontend',ratings:{},completed:{},profile:null,practice:{},projects:{},portfolio:{},applications:[]};mentorTurns=[];resetFit();$('#planOutput').textContent='';$('#planOutput').classList.remove('visible');resetChat();persist();updateDashboard();toast('Career progress reset')});
+$('#resetProfile').addEventListener('click',()=>{if(!window.confirm('Reset your saved career progress?'))return;state={role:'frontend',ratings:{},completed:{},profile:null,practice:{},projects:{},portfolio:{},applications:[],learning:{done:{},attempts:{}},activity:{},showcase:{}};mentorTurns=[];resetFit();$('#planOutput').textContent='';$('#planOutput').classList.remove('visible');resetChat();persist();updateDashboard();toast('Career progress reset')});
 // Interview practice: rule-based demo, Gemini if configured.
 let questionNo=0;function setQuestion(i){questionNo=i%3;$('#questionIndex').textContent='QUESTION '+String(questionNo+1).padStart(2,'0')+' / 03';$('#interviewQuestion').textContent=roleLabel().questions[questionNo];$('#interviewAnswer').value='';$('#interviewFeedback').classList.remove('visible')}
 $('#nextQuestion').addEventListener('click',()=>setQuestion(questionNo+1));
@@ -193,7 +658,7 @@ function showFit(){
 }
 function resetFit(){fitIndex=0;fitAnswers=[];showFit()}
 $('#fitBack').addEventListener('click',()=>{if(fitIndex>0){fitIndex--;fitAnswers.pop();showFit()}});$('#fitRestart').addEventListener('click',resetFit);
-function planDemo(level,hours,goal){const p=roleLabel(),skills=p.skills.map(s=>s[0]);return `STARTER TEMPLATE / DEMO MODE — NOT AI-GENERATED\nCareer: ${p.name} · ${hours} hours per week · ${level}\n\nWEEK 1 · BUILD FOUNDATIONS\nLearn ${skills[0]} and ${skills[1]}. Study for ${hours} hours; write short notes, build one mini exercise.\n\nWEEK 2 · APPLY YOUR LEARNING\nPractice ${skills[2]} and ${skills[3]}. Complete a small task and push working code or results to GitHub.\n\nWEEK 3 · BUILD A PROJECT\n${p.steps[3][1]} Document the problem, tech choices, screenshots, and limitations.\n\nWEEK 4 · PRACTICE & PRESENT\n${p.steps[4][1]} Revisit weaker skills, prepare three project explanations, and check your resume.\n\nGOAL YOU ENTERED: ${goal||'Not specified'}\n\nFor a personalized Gemini-generated plan, set GEMINI_API_KEY in Netlify.`}
+function planDemo(level,hours,goal){const p=roleLabel(),skills=p.skills.map(s=>s[0]);return `STARTER TEMPLATE / DEMO MODE — NOT AI-GENERATED\nCareer: ${p.name} · ${hours} hours per week · ${level}\n\nWEEK 1 · BUILD FOUNDATIONS\nLearn ${skills[0]} and ${skills[1]}. Study for ${hours} hours; write short notes, build one mini exercise.\n\nWEEK 2 · APPLY YOUR LEARNING\nPractice ${skills[2]} and ${skills[3]}. Complete a small task and push working code or results to GitHub.\n\nWEEK 3 · BUILD A PROJECT\n${p.steps[3][1]} Document the problem, tech choices, screenshots, and limitations.\n\nWEEK 4 · PRACTICE & PRESENT\n${p.steps[4][1]} Revisit weaker skills, prepare three project explanations, and check your resume.\n\nGOAL YOU ENTERED: ${goal||'Not specified'}\n\nFor a personalized Gemini-generated plan, configure GEMINI_API_KEY on the hosting platform.`}
 $('#generatePlan').addEventListener('click',async()=>{
  const level=$('#planLevel').value,hours=$('#planHours').value,goal=$('#planGoal').value.trim().slice(0,500),out=$('#planOutput'),btn=$('#generatePlan');
  out.classList.add('visible');out.textContent='Building your 30-day study plan…';btn.disabled=true;
@@ -231,10 +696,10 @@ function roleProjects(){return Array.isArray(state.projects[state.role])?state.p
 function practiceBest(){return Number(state.practice[state.role]?.best)||0}
 function portfolioFlags(){const p=state.portfolio[state.role];return Array.isArray(p)&&p.length===PORTFOLIO_ITEMS.length?p:Array(PORTFOLIO_ITEMS.length).fill(false)}
 function renderDNA(){if(!$('#dnaScore'))return;let ratings=readiness(),milestones=getCompleted().filter(Boolean).length*20,questions=practiceBest()*25,projects=roleProjects(),shipped=projects.filter(x=>x.checks?.every(Boolean)).length,projScore=projects.length?Math.min(100,Math.round((projects.reduce((sum,p)=>sum+(p.checks||[]).filter(Boolean).length,0)/(projects.length*4))*100)):0,portfolio=portfolioFlags().filter(Boolean).length/PORTFOLIO_ITEMS.length*100;const indicators=[['Self-rated skills',ratings,.4],['Roadmap milestones',milestones,.2],['Practice check-in',questions,.15],['Project evidence',projScore,.15],['Portfolio checklist',portfolio,.1]];const score=Math.round(indicators.reduce((a,[name,n,w])=>a+n*w,0));$('#dnaScore').textContent=score+'%';$('#dnaBars').innerHTML=indicators.map(([name,n])=>`<div><div class="dna-bar-head"><span>${escapeHTML(name)}</span><b>${Math.round(n)}%</b></div><div class="dna-bar-track"><i style="width:${n}%"></i></div></div>`).join('')}
-function renderPractice(){const record=state.practice[state.role],questions=CHECKS[state.role];$('#practiceTag').textContent=record?'LAST '+escapeHTML(record.latest+'/4'):'NEW SESSION';$('#practiceBest').textContent=record?`${record.best}/4`:'—';$('#practiceRecap').textContent=record?`Your best attempt: ${record.best} of 4. Last completed: ${record.date||'on this device'}. Retry to improve your knowledge.`:'Take this knowledge check to discover concepts worth reviewing.';$('#practiceQuestions').innerHTML=questions.map(([q,opts],i)=>`<div class="checkin-question"><h3>${i+1}. ${escapeHTML(q)}</h3>${opts.map((opt,j)=>`<label class="checkin-answer"><input type="radio" name="pract-${i}" value="${j}"><span>${escapeHTML(opt)}</span></label>`).join('')}</div>`).join('');$('#practiceResult').classList.remove('visible')}
-$('#practiceGrade').addEventListener('click',()=>{const q=CHECKS[state.role],answers=q.map((item,i)=>document.querySelector(`input[name="pract-${i}"]:checked`)?.value);if(answers.some(x=>x===undefined)){toast('Please answer all four questions first');return}const points=q.filter((item,i)=>Number(answers[i])===item[2]).length,prev=state.practice[state.role]||{};state.practice[state.role]={latest:points,best:Math.max(points,Number(prev.best)||0),date:new Date().toLocaleDateString()};persist();renderDNA();$('#practiceBest').textContent=state.practice[state.role].best+'/4';$('#practiceTag').textContent=`SCORED ${points}/4`;$('#practiceRecap').textContent=`Latest: ${points}/4 · Best: ${state.practice[state.role].best}/4. Study the explanations below and try again.`;const box=$('#practiceResult');box.classList.add('visible');box.textContent=`KNOWLEDGE CHECK: ${points}/4 CORRECT\n\n`+q.map(([question,opts,correct,why],i)=>`${Number(answers[i])===correct?'✓':'○'} Q${i+1}: ${opts[correct]} — ${why}`).join('\n\n');toast('Practice check-in saved')});
+function renderPractice(){const record=state.practice[state.role],questions=CHECKS[state.role]||CHECKS[PATHS[state.role]?.family||'frontend'];$('#practiceTag').textContent=record?'LAST '+escapeHTML(record.latest+'/4'):'NEW SESSION';$('#practiceBest').textContent=record?`${record.best}/4`:'—';$('#practiceRecap').textContent=record?`Your best attempt: ${record.best} of 4. Last completed: ${record.date||'on this device'}. Retry to improve your knowledge.`:'Take this knowledge check to discover concepts worth reviewing.';$('#practiceQuestions').innerHTML=questions.map(([q,opts],i)=>`<div class="checkin-question"><h3>${i+1}. ${escapeHTML(q)}</h3>${opts.map((opt,j)=>`<label class="checkin-answer"><input type="radio" name="pract-${i}" value="${j}"><span>${escapeHTML(opt)}</span></label>`).join('')}</div>`).join('');$('#practiceResult').classList.remove('visible')}
+$('#practiceGrade').addEventListener('click',()=>{const q=CHECKS[state.role]||CHECKS[PATHS[state.role]?.family||'frontend'],answers=q.map((item,i)=>document.querySelector(`input[name="pract-${i}"]:checked`)?.value);if(answers.some(x=>x===undefined)){toast('Please answer all four questions first');return}const points=q.filter((item,i)=>Number(answers[i])===item[2]).length,prev=state.practice[state.role]||{};state.practice[state.role]={latest:points,best:Math.max(points,Number(prev.best)||0),date:new Date().toLocaleDateString()};persist();markActivity('practice');renderDNA();$('#practiceBest').textContent=state.practice[state.role].best+'/4';$('#practiceTag').textContent=`SCORED ${points}/4`;$('#practiceRecap').textContent=`Latest: ${points}/4 · Best: ${state.practice[state.role].best}/4. Study the explanations below and try again.`;const box=$('#practiceResult');box.classList.add('visible');box.textContent=`KNOWLEDGE CHECK: ${points}/4 CORRECT\n\n`+q.map(([question,opts,correct,why],i)=>`${Number(answers[i])===correct?'✓':'○'} Q${i+1}: ${opts[correct]} — ${why}`).join('\n\n');toast('Practice check-in saved')});
 $('#practiceRestart').addEventListener('click',renderPractice);
-function renderProjects(){const list=roleProjects();$('#projectCounter').textContent=`${list.length} PROJECT${list.length===1?'':'S'}`;$('#projectIdeas').innerHTML=PROJECT_IDEAS[state.role].map(([title,desc],i)=>`<div class="idea-card"><span class="mini-kicker">MISSION 0${i+1}</span><b>${escapeHTML(title)}</b><p>${escapeHTML(desc)}</p><button class="button button-outline" data-idea="${i}" type="button">ADD TO MY PROJECTS +</button></div>`).join('');$('#myProjects').innerHTML=list.length?list.map(item=>{const count=(item.checks||[]).filter(Boolean).length;const link=safeExternalURL(item.url||'');return `<div class="project-item" data-pid="${escapeHTML(item.id)}"><div class="project-head"><div><h3>${escapeHTML(item.title)}</h3><p>${count}/4 PROJECT MILESTONES · ${count===4?'PRESENTATION READY (SELF-MARKED)':'WORK IN PROGRESS'}</p></div><span class="signal">${Math.round(count*25)}% CHECKLIST</span></div><div class="project-checks">${['Problem & scope defined','Working code / deliverable','README with setup','Demo, screenshots or results'].map((txt,i)=>`<label><input type="checkbox" data-pcheck="${i}" ${item.checks?.[i]?'checked':''}><span>${escapeHTML(txt)}</span></label>`).join('')}</div><div class="mini-actions">${link?`<a href="${escapeHTML(link)}" target="_blank" rel="noopener noreferrer">OPEN EVIDENCE ↗</a>`:'<span class="tiny-note">No evidence URL added</span>'}<button type="button" data-remove-project>REMOVE</button></div></div>`}).join(''):'<div class="empty-panel"><strong>YOUR FIRST PROJECT STARTS HERE.</strong><p>Start a suggested mission or add your own and record each milestone as it becomes real.</p></div>';$$('[data-idea]').forEach(b=>b.addEventListener('click',()=>{const [title]=PROJECT_IDEAS[state.role][Number(b.dataset.idea)];if(roleProjects().some(x=>x.title===title)){toast('Project already added');return}addProject(title,'')}));$$('[data-pid]').forEach(el=>{el.querySelectorAll('[data-pcheck]').forEach(ch=>ch.addEventListener('change',()=>{const item=roleProjects().find(x=>x.id===el.dataset.pid);if(!item)return;item.checks[Number(ch.dataset.pcheck)]=ch.checked;persist();renderProjects();renderDNA()}));el.querySelector('[data-remove-project]')?.addEventListener('click',()=>{if(!confirm('Remove this local project record?'))return;state.projects[state.role]=roleProjects().filter(x=>x.id!==el.dataset.pid);persist();renderProjects();renderDNA()})})}
+function renderProjects(){const list=roleProjects();$('#projectCounter').textContent=`${list.length} PROJECT${list.length===1?'':'S'}`;$('#projectIdeas').innerHTML=(PROJECT_IDEAS[state.role]||PROJECT_IDEAS[PATHS[state.role]?.family||'frontend']).map(([title,desc],i)=>`<div class="idea-card"><span class="mini-kicker">MISSION 0${i+1}</span><b>${escapeHTML(title)}</b><p>${escapeHTML(desc)}</p><button class="button button-outline" data-idea="${i}" type="button">ADD TO MY PROJECTS +</button></div>`).join('');$('#myProjects').innerHTML=list.length?list.map(item=>{const count=(item.checks||[]).filter(Boolean).length;const link=safeExternalURL(item.url||'');return `<div class="project-item" data-pid="${escapeHTML(item.id)}"><div class="project-head"><div><h3>${escapeHTML(item.title)}</h3><p>${count}/4 PROJECT MILESTONES · ${count===4?'PRESENTATION READY (SELF-MARKED)':'WORK IN PROGRESS'}</p></div><span class="signal">${Math.round(count*25)}% CHECKLIST</span></div><div class="project-checks">${['Problem & scope defined','Working code / deliverable','README with setup','Demo, screenshots or results'].map((txt,i)=>`<label><input type="checkbox" data-pcheck="${i}" ${item.checks?.[i]?'checked':''}><span>${escapeHTML(txt)}</span></label>`).join('')}</div><div class="mini-actions">${link?`<a href="${escapeHTML(link)}" target="_blank" rel="noopener noreferrer">OPEN EVIDENCE ↗</a>`:'<span class="tiny-note">No evidence URL added</span>'}<button type="button" data-remove-project>REMOVE</button></div></div>`}).join(''):'<div class="empty-panel"><strong>YOUR FIRST PROJECT STARTS HERE.</strong><p>Start a suggested mission or add your own and record each milestone as it becomes real.</p></div>';$$('[data-idea]').forEach(b=>b.addEventListener('click',()=>{const [title]=(PROJECT_IDEAS[state.role]||PROJECT_IDEAS[PATHS[state.role]?.family||'frontend'])[Number(b.dataset.idea)];if(roleProjects().some(x=>x.title===title)){toast('Project already added');return}addProject(title,'')}));$$('[data-pid]').forEach(el=>{el.querySelectorAll('[data-pcheck]').forEach(ch=>ch.addEventListener('change',()=>{const item=roleProjects().find(x=>x.id===el.dataset.pid);if(!item)return;item.checks[Number(ch.dataset.pcheck)]=ch.checked;persist();if(ch.checked)markActivity('build');renderProjects();renderDNA()}));el.querySelector('[data-remove-project]')?.addEventListener('click',()=>{if(!confirm('Remove this local project record?'))return;state.projects[state.role]=roleProjects().filter(x=>x.id!==el.dataset.pid);persist();renderProjects();renderDNA()})})}
 function addProject(title,url){if(roleProjects().length>=25){toast('Up to 25 projects per career in this browser');return}const list=roleProjects().slice();list.unshift({id:'p-'+Date.now()+'-'+Math.random().toString(36).slice(2,8),title:title.trim().slice(0,85),url:url||'',checks:[false,false,false,false]});state.projects[state.role]=list;persist();renderProjects();renderDNA();toast('Project added to your workspace')}
 $('#projectAddForm').addEventListener('submit',e=>{e.preventDefault();const title=$('#projectTitle').value.trim(),raw=$('#projectUrl').value.trim();if(!title)return;if(raw&&!safeExternalURL(raw)){toast('Use a valid https:// project link');return}addProject(title,raw);e.target.reset()});
 function renderPortfolio(){const flags=portfolioFlags(),done=flags.filter(Boolean).length;$('#portfolioCount').textContent=done+' / 7';$('#portfolioMeter').style.width=(done/7*100)+'%';$('#portfolioItems').innerHTML=PORTFOLIO_ITEMS.map(([title,desc],i)=>`<label class="portfolio-check"><input type="checkbox" data-pitem="${i}" ${flags[i]?'checked':''}><span><b>${escapeHTML(title)}</b><small>${escapeHTML(desc)}</small></span></label>`).join('');$$('[data-pitem]').forEach(b=>b.addEventListener('change',()=>{const val=portfolioFlags().slice();val[Number(b.dataset.pitem)]=b.checked;state.portfolio[state.role]=val;persist();renderPortfolio();renderDNA()}))}
@@ -247,15 +712,97 @@ function showGithub(data){const repos=Array.isArray(data.repos)?data.repos.slice
 $('#githubForm').addEventListener('submit',async e=>{e.preventDefault();const target=githubTarget($('#githubInput').value);if(!target){toast('Enter a valid GitHub username or a public repo URL');return}const btn=$('#githubScan'),out=$('#githubOutput');btn.disabled=true;out.innerHTML='<div class="empty-panel"><strong>Checking public GitHub data…</strong><p>Reading repository metadata, not private repositories.</p></div>';try{showGithub(await githubLoad(target))}catch(err){out.innerHTML=`<div class="empty-panel"><strong>Unable to read GitHub data</strong><p>${escapeHTML(err.message)}. No analysis was generated.</p></div>`}finally{btn.disabled=false}});
 const KEYWORDS={frontend:[['HTML & CSS',/\bhtml\b|\bcss\b|responsive|accessibility|tailwind/i],['JavaScript',/javascript|typescript|\bjs\b/i],['React',/\breact\b|next\.?js/i],['Git & GitHub',/\bgit\b|github|version control/i],['Accessibility',/accessibility|\ba11y\b|wcag/i],['Projects',/portfolio|project|production|deploy/i]],ai:[['Python',/\bpython\b/i],['Math & Statistics',/statistics|linear algebra|probability/i],['Pandas & Data',/pandas|numpy|data wrangling/i],['Machine Learning',/machine learning|\bml\b|scikit|tensorflow|pytorch/i],['Model Evaluation',/evaluation|precision|recall|\bf1\b|metrics/i],['Deployment',/deploy|api|production|mlops/i]],data:[['Excel / Sheets',/excel|sheets|spreadsheet/i],['SQL',/\bsql\b|postgres|mysql/i],['Python / Pandas',/python|pandas/i],['Data Visualization',/visualiz|tableau|power\s*bi|dashboard/i],['Statistics',/statistic|hypothesis|sampling/i],['Storytelling',/storytell|present|insights|communicat/i]],cloud:[['Linux',/linux|shell|bash/i],['Networking',/network|tcp|dns|http/i],['Cloud Basics',/aws|azure|gcp|cloud/i],['Containers',/docker|kubernetes|container/i],['Infrastructure as Code',/terraform|infrastructure as code|\biac\b/i],['Security & Monitoring',/security|iam|monitor|observability/i]]};
 let lastJobGap='';
-$('#jobAnalyze').addEventListener('click',()=>{const text=$('#jobDescription').value.trim(),out=$('#jobResult');if(text.length<80){toast('Paste at least 80 characters of a real role description');return}const reqs=KEYWORDS[state.role].map(([name,re],i)=>({name,mentioned:re.test(text),rating:getRatings()[i],task:roleLabel().skills[i][2]})),found=reqs.filter(x=>x.mentioned),weak=found.filter(x=>x.rating<3),strong=found.filter(x=>x.rating>=3);lastJobGap=weak.map(x=>x.name).join(', ');out.classList.add('visible');out.innerHTML=`<div class="job-summary"><h3>KEYWORD COVERAGE · ${found.length}/${reqs.length} TRACK SKILL AREAS</h3><p>We found ${found.length} of your track's six skill areas mentioned in the pasted text. This isn't an ATS score or job suitability percentage.</p><p>${found.map(x=>`<span class="job-chip ${x.rating<3?'missing':'found'}">${escapeHTML(x.name)} · ${x.rating}/5 self-rated</span>`).join('')||'No track-specific keywords identified. The role may use different terminology.'}</p><h3>PRIORITIES TO LEARN</h3>${weak.length?`<ul>${weak.map(x=>`<li>${escapeHTML(x.name)} — ${escapeHTML(x.task)}</li>`).join('')}</ul>`:found.length?'<p>No mentioned areas are self-rated below 3/5. Check your ability through real projects and interviews.</p>':'<p>Try a more complete job description and double-check its requirements manually.</p>'}<small>Matching relies on a limited keyword list; it does not rank candidates or verify skills.</small></div>`});
+$('#jobAnalyze').addEventListener('click',()=>{const text=$('#jobDescription').value.trim(),out=$('#jobResult');if(text.length<80){toast('Paste at least 80 characters of a real role description');return}const reqs=(KEYWORDS[state.role]||PATHS[state.role].skills.map(([name])=>[name,new RegExp(name.split(/[^a-z0-9+#]+/i).filter(w=>w.length>2).map(w=>w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')).join('|')||'xkcdnevermatch','i')])).map(([name,re],i)=>({name,mentioned:re.test(text),rating:getRatings()[i],task:roleLabel().skills[i][2]})),found=reqs.filter(x=>x.mentioned),weak=found.filter(x=>x.rating<3),strong=found.filter(x=>x.rating>=3);lastJobGap=weak.map(x=>x.name).join(', ');out.classList.add('visible');out.innerHTML=`<div class="job-summary"><h3>KEYWORD COVERAGE · ${found.length}/${reqs.length} TRACK SKILL AREAS</h3><p>We found ${found.length} of your track's six skill areas mentioned in the pasted text. This isn't an ATS score or job suitability percentage.</p><p>${found.map(x=>`<span class="job-chip ${x.rating<3?'missing':'found'}">${escapeHTML(x.name)} · ${x.rating}/5 self-rated</span>`).join('')||'No track-specific keywords identified. The role may use different terminology.'}</p><h3>PRIORITIES TO LEARN</h3>${weak.length?`<ul>${weak.map(x=>`<li>${escapeHTML(x.name)} — ${escapeHTML(x.task)}</li>`).join('')}</ul>`:found.length?'<p>No mentioned areas are self-rated below 3/5. Check your ability through real projects and interviews.</p>':'<p>Try a more complete job description and double-check its requirements manually.</p>'}<small>Matching relies on a limited keyword list; it does not rank candidates or verify skills.</small></div>`});
 $('#askGapCoach').addEventListener('click',()=>{const q=lastJobGap?`Help me improve these skill gaps for ${roleLabel().name}: ${lastJobGap}. Give specific practice tasks and portfolio project ideas.`:`How can I compare real internship requirements to my current ${roleLabel().name} skills and identify my biggest gaps?`;$('#mentorInput').value=q;location.hash='#dashboard/mentor';$('#mentorInput').focus()});
 function renderApplications(){const list=state.applications||[];$('#applicationCount').textContent=list.length+' SAVED';$('#applicationList').innerHTML=list.length?list.map(x=>`<div class="app-entry" data-app-id="${escapeHTML(x.id)}"><div class="project-head"><div><h3>${escapeHTML(x.role)}</h3><p>${escapeHTML(x.company)} · Added ${escapeHTML(x.date)}</p></div><span class="app-badge">${escapeHTML(x.status)}</span></div><div class="mini-actions" style="margin-top:12px"><button data-app-next type="button">ADVANCE STATUS →</button><button data-app-remove type="button">REMOVE</button></div></div>`).join(''):'<div class="empty-panel"><strong>NO APPLICATIONS TRACKED YET.</strong><p>Save an internship or placement opportunity above to track its status.</p></div>';$$('[data-app-id]').forEach(e=>{e.querySelector('[data-app-next]').addEventListener('click',()=>{const x=state.applications.find(x=>x.id===e.dataset.appId),stages=['Saved','Applied','Interview','Offer','Closed'];if(!x)return;x.status=stages[(stages.indexOf(x.status)+1)%stages.length];persist();renderApplications()});e.querySelector('[data-app-remove]').addEventListener('click',()=>{state.applications=state.applications.filter(x=>x.id!==e.dataset.appId);persist();renderApplications()})})}
 $('#applicationForm').addEventListener('submit',e=>{e.preventDefault();const company=$('#appCompany').value.trim(),role=$('#appRole').value.trim(),status=$('#appStatus').value;if(!company||!role)return;if(state.applications.length>=150){toast('Export and clean older entries to add more');return}state.applications.unshift({id:'a'+Date.now(),company:company.slice(0,70),role:role.slice(0,90),status,date:new Date().toLocaleDateString()});persist();renderApplications();e.target.reset();toast('Application saved locally')});
 $('#exportApplications').addEventListener('click',()=>{const csv=(v)=>'"'+String(v).replace(/"/g,'""')+'"';const records=[['Company','Role','Status','Added'],...(state.applications||[]).map(x=>[x.company,x.role,x.status,x.date])];downloadText('aivora-applications.csv',records.map(r=>r.map(csv).join(',')).join('\r\n'),'text/csv;charset=utf-8')});
-function refreshExtras(){renderPractice();renderProjects();renderPortfolio();renderApplications();renderDNA()}
+function refreshExtras(){renderPractice();renderProjects();renderPortfolio();renderApplications();renderDNA();renderLearning();renderMomentum();showShowcaseFields();renderShowcase()}
+
+
+// AIVORA LEARNING LAB + WEEKLY MOMENTUM + PORTFOLIO BUILDER
+// All progress below is stored in the existing per-user app_state JSON record.
+const LESSONS={
+ css:{name:'HTML & CSS',units:[
+  ['CSS selectors','A CSS selector chooses the HTML elements to style. A class selector starts with a dot, while an ID starts with #.',' .card { color: hotpink; } ','How do you select all elements with class="card"?',['#card','.card','card()'],1,'A dot (.) targets a class. A hash (#) targets an ID.'],
+  ['The box model','Every rendered element has content, padding, border and margin. box-sizing: border-box includes border and padding inside its declared width.',' .card { box-sizing: border-box; padding: 16px; border: 1px solid; } ','Which part of the box model creates space OUTSIDE the border?',['padding','margin','content'],1,'Margin creates space beyond an element’s border.'],
+  ['Flexbox alignment','display:flex distributes items in a row or column. justify-content aligns on the main axis; align-items aligns on the cross axis.',' .row { display: flex; justify-content: space-between; align-items: center; } ','Which property distributes items along the main axis?',['align-items','justify-content','font-weight'],1,'justify-content controls the main axis.']
+ ]},
+ javascript:{name:'JavaScript',units:[
+  ['Variables and scope','const prevents rebinding a variable, while let allows reassignment. Both have block scope.',' const student = "Aivora"; let score = 0; score += 1; ','Which declaration allows reassignment?',['const','let','import'],1,'let allows a variable to be assigned a new value.'],
+  ['DOM events','JavaScript can respond to actions on a page by registering event listeners, such as click or input.',' button.addEventListener("click", () => alert("Ready!")); ','Which API listens for a click?',['setInterval','addEventListener','JSON.parse'],1,'addEventListener registers an event handler for user interactions.'],
+  ['Async functions','async functions can await promises. Await pauses inside the function until the promise settles, without blocking the browser’s entire UI.',' const r = await fetch("/api/config"); const data = await r.json(); ','What does await operate on?',['A Promise','A CSS selector','A database table'],0,'await resolves or rejects a Promise inside an async context.']
+ ]},
+ python:{name:'Python',units:[
+  ['Python lists','Lists hold ordered items. Indices start at zero. Negative indices read backward from the end.',' skills = ["HTML", "CSS", "Python"]; print(skills[0]) ','What does skills[0] return?',['Python','HTML','CSS'],1,'Zero-based indexing means element 0 is the first one.'],
+  ['Functions','A function groups reusable behavior and can return a value using the return statement.',' def add(a, b):\n    return a + b\nprint(add(2, 3)) ','What keyword sends a value back to a caller?',['print','return','import'],1,'return provides the function’s result.'],
+  ['Dictionaries','Dictionaries map keys to values, useful for structured information such as a student profile.',' student = {"name": "Sam", "year": 1}; print(student["year"]) ','How do you access a dictionary value by key?',['student["year"]','student[0]','student.year()'],0,'Square brackets with a key retrieve the matching value.']
+ ]},
+ sql:{name:'SQL',units:[
+  ['SELECT and WHERE','SELECT chooses columns; WHERE filters rows by a condition.',' SELECT name FROM students WHERE study_year = 1; ','Which clause filters rows?',['ORDER BY','WHERE','SELECT'],1,'WHERE restricts the returned rows.'],
+  ['JOIN tables','JOIN combines rows across tables using a matching condition, such as a student_id foreign key.',' SELECT s.name, p.title FROM students s JOIN projects p ON p.student_id = s.id; ','Which keyword identifies the matching join condition?',['WITH','ON','HAVING'],1,'ON specifies how the two tables are matched.'],
+  ['GROUP BY','GROUP BY combines rows into groups before aggregate functions such as COUNT, SUM, and AVG.',' SELECT role, COUNT(*) FROM applications GROUP BY role; ','Which query counts applications per role?',['SELECT role, COUNT(*) FROM applications GROUP BY role','SELECT COUNT(role) FROM applications ORDER BY role','DELETE FROM applications'],0,'GROUP BY role produces one group per role.']
+ ]},
+ git:{name:'Git & GitHub',units:[
+  ['Commits','A commit saves a versioned snapshot of your work and includes a descriptive message.',' git add .\ngit commit -m "Build responsive navbar" ','What does git commit do?',['Deletes the repository','Saves a snapshot to history','Deploys to Vercel automatically'],1,'A commit records a versioned snapshot. Deployment requires separate configuration.'],
+  ['Branches','Branches let you work on features without directly changing the main line until the changes are merged.',' git switch -c feature/portfolio ','Why create a feature branch?',['To isolate changes','To delete old commits','To store passwords publicly'],0,'Branching isolates work from the main line.'],
+  ['Pull requests','A pull request proposes changes from one branch into another, making reviews and collaboration easier.',' Create branch → push → open pull request → review → merge ','What is the main purpose of a pull request?',['To propose and review changes','To hide source code','To purchase hosting'],0,'Pull requests support collaboration and code review.']
+ ]}
+};
+let selectedCourse='css',selectedUnit=0;
+function lessonProgress(){if(!state.learning||typeof state.learning!=='object')state.learning={done:{},attempts:{}};if(!state.learning.done)state.learning.done={};if(!state.learning.attempts)state.learning.attempts={};return state.learning}
+function lessonId(course,index){return `${course}-${index}`}
+function lessonCount(){return Object.keys(lessonProgress().done).filter(id=>lessonProgress().done[id]).length}
+function renderLearning(){
+ const course=LESSONS[selectedCourse]||LESSONS.css,done=lessonProgress().done,total=Object.values(LESSONS).reduce((sum,c)=>sum+c.units.length,0),passed=lessonCount();
+ $('#learnSelect').value=selectedCourse;$('#learnCount').textContent=`${passed} / ${total} LESSONS`;
+ $('#learnPercent').textContent=Math.round(passed/total*100)+'%';$('#learnFill').style.width=(passed/total*100)+'%';
+ $('#learnCards').innerHTML=course.units.map((unit,i)=>`<button class="lab-card ${selectedUnit===i?'selected':''}" type="button" data-unit="${i}"><span>${String(i+1).padStart(2,'0')}</span><span><b>${escapeHTML(unit[0])}</b><small>${done[lessonId(selectedCourse,i)]?'✓ PASSED':'LEARN + CHECK YOUR KNOWLEDGE'}</small></span><span>${done[lessonId(selectedCourse,i)]?'✓':'↗'}</span></button>`).join('');
+ const [title,copy,code,question,options,correct,explanation]=course.units[selectedUnit];
+ $('#learnUnit').innerHTML=`<div class="mini-kicker">${escapeHTML(course.name)} / LESSON ${selectedUnit+1}</div><h3>${escapeHTML(title)}</h3><p class="lab-copy">${escapeHTML(copy)}</p><pre class="lab-code"><code>${escapeHTML(code.trim())}</code></pre><fieldset class="lab-quiz"><legend>QUICK CHECK · ${escapeHTML(question)}</legend>${options.map((o,i)=>`<label class="lab-option"><input type="radio" name="lesson-answer" value="${i}"><span>${escapeHTML(o)}</span></label>`).join('')}</fieldset><div class="inline-actions"><button class="button button-primary" id="lessonCheck" type="button">CHECK ANSWER ↗</button><button class="button button-outline" id="lessonAskAI" type="button">ASK AI TO EXPLAIN</button></div><div id="lessonFeedback" class="lab-feedback" role="status" aria-live="polite">${done[lessonId(selectedCourse,selectedUnit)]?'✓ YOU COMPLETED THIS LESSON. REVISE ANYTIME.':''}</div>`;
+}
+$('#learnSelect').addEventListener('change',()=>{selectedCourse=$('#learnSelect').value;selectedUnit=0;renderLearning()});
+$('#learnMyGap').addEventListener('click',()=>{const map={frontend:'css',ai:'python',data:'sql',cloud:'git'};selectedCourse=map[PATHS[state.role]?.family||state.role]||'css';selectedUnit=0;renderLearning();location.hash='#dashboard/learn'});
+$('#learnCards').addEventListener('click',e=>{const b=e.target.closest('[data-unit]');if(!b)return;selectedUnit=Number(b.dataset.unit);renderLearning()});
+$('#learnUnit').addEventListener('click',e=>{
+ if(e.target.closest('#lessonAskAI')){const unit=LESSONS[selectedCourse].units[selectedUnit];$('#mentorInput').value=`Teach me ${unit[0]} in ${LESSONS[selectedCourse].name} with a beginner-friendly example and one practice task.`;location.hash='#dashboard/mentor';return}
+ if(!e.target.closest('#lessonCheck'))return;
+ const choice=$('#learnUnit input[name="lesson-answer"]:checked');if(!choice){toast('Pick an answer first');return}
+ const unit=LESSONS[selectedCourse].units[selectedUnit],correct=Number(choice.value)===unit[5],id=lessonId(selectedCourse,selectedUnit),record=lessonProgress();record.attempts[id]=(record.attempts[id]||0)+1;
+ if(correct){record.done[id]=new Date().toISOString();markActivity('learn');toast('Lesson completed — saved to your account')}else persist();
+ $('#lessonFeedback').textContent=(correct?'✓ Correct! ':'↻ Not quite. ')+unit[6];$('#lessonFeedback').classList.toggle('passed',correct);
+ $$('#learnUnit .lab-option').forEach(l=>{const radio=l.querySelector('input');l.classList.toggle('is-correct',Number(radio.value)===unit[5])});
+ $('#learnCount').textContent=`${lessonCount()} / 15 LESSONS`;$('#learnPercent').textContent=Math.round(lessonCount()/15*100)+'%';$('#learnFill').style.width=(lessonCount()/15*100)+'%';
+ $$('#learnCards [data-unit]').forEach(b=>{if(Number(b.dataset.unit)===selectedUnit&&correct){b.querySelector('small').textContent='✓ PASSED';b.lastElementChild.textContent='✓'}});
+ renderMomentum();
+});
+function dayKey(d){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
+function recordedActivities(){if(!state.activity||typeof state.activity!=='object')state.activity={};return state.activity}
+function markActivity(task){const key=dayKey(new Date()),days=recordedActivities();days[key]={...(days[key]||{}),[task]:true};persist();renderMomentum()}
+function renderMomentum(){
+ const days=recordedActivities(),now=new Date(),today=dayKey(now);$('#todayDate').textContent=now.toLocaleDateString(undefined,{month:'short',day:'numeric'}).toUpperCase();
+ let weekActive=0,markup='';for(let n=6;n>=0;n--){const d=new Date(now.getFullYear(),now.getMonth(),now.getDate()-n),key=dayKey(d),entry=days[key]||{},count=['learn','practice','build'].filter(k=>entry[k]).length;if(count)weekActive++;markup+=`<div class="week-day ${count?'week-done':''}" title="${count} activity types"><b>${escapeHTML(d.toLocaleDateString(undefined,{weekday:'short'}))}</b><span>${count?'●':'○'}</span><small>${escapeHTML(d.toLocaleDateString(undefined,{month:'short',day:'numeric'}))}</small></div>`}
+ let streak=0;for(let n=0;n<365;n++){const d=new Date(now.getFullYear(),now.getMonth(),now.getDate()-n);if(['learn','practice','build'].some(k=>days[dayKey(d)]?.[k]))streak++;else if(n===0)continue;else break}
+ $('#momentumWeek').innerHTML=markup;$('#momentumDays').textContent=String(weekActive);$('#momentumStreak').textContent=String(streak);$('#momentumLessons').textContent=String(lessonCount());
+ const tasks=[['learn','Study: finish a mini-lesson','Passing a Learning Lab quiz checks this automatically.'],['practice','Practice: test your understanding','Complete a skill check-in to record practice.'],['build','Build: work on a real project','Check an actual project milestone or record progress manually.']];
+ $('#momentumTasks').innerHTML=tasks.map(([id,title,desc])=>`<label class="momentum-task"><input type="checkbox" data-mission="${id}" ${days[today]?.[id]?'checked':''}><span><b>${escapeHTML(title)}</b><small>${escapeHTML(desc)}</small></span></label>`).join('');
+}
+$('#momentumTasks').addEventListener('change',e=>{const box=e.target.closest('[data-mission]');if(!box)return;const days=recordedActivities(),key=dayKey(new Date());days[key]={...(days[key]||{}),[box.dataset.mission]:box.checked};persist();renderMomentum()});
+
+function validatedPortfolioLink(s){return typeof s==='string'&&/^https:\/\//i.test(s.trim())?safeExternalURL(s.trim()):''}
+function portfolioDraft(){return state.showcase&&typeof state.showcase==='object'?state.showcase:(state.showcase={})}
+function showShowcaseFields(){const d=portfolioDraft();$('#showcaseName').value=d.name??state.profile?.name??'';$('#showcaseHeadline').value=d.headline??`Aspiring ${roleLabel().name}`;$('#showcaseAbout').value=d.about??'';$('#showcaseGithub').value=d.github??'';$('#showcaseContact').value=d.contact??''}
+function gatherShowcase(){return{name:$('#showcaseName').value.trim().slice(0,80),headline:$('#showcaseHeadline').value.trim().slice(0,120),about:$('#showcaseAbout').value.trim().slice(0,700),github:$('#showcaseGithub').value.trim(),contact:$('#showcaseContact').value.trim()}}
+function portfolioDocument(d){
+ const projects=roleProjects().slice(0,16),safeGit=validatedPortfolioLink(d.github),email=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.contact)?d.contact:'',projectHTML=projects.length?projects.map(p=>`<article><div class="tag">PROJECT · ${((p.checks||[]).filter(Boolean).length)}/4 SELF-MARKED MILESTONES</div><h3>${escapeHTML(p.title||'Untitled project')}</h3><p>Project work tracked in Aivora. Review the linked evidence to learn more.</p>${validatedPortfolioLink(p.url)?`<a href="${escapeHTML(validatedPortfolioLink(p.url))}" target="_blank" rel="noopener noreferrer">View project ↗</a>`:''}</article>`).join(''):'<article><h3>Projects coming soon</h3><p>Add real work in Aivora’s Project Studio, then regenerate this portfolio.</p></article>';
+ return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHTML(d.name||'My Portfolio')} — Portfolio</title><style>:root{color-scheme:dark}*{box-sizing:border-box}body{background:#0b0712;color:#faf3ff;font-family:system-ui,sans-serif;margin:0}main{max-width:1050px;margin:auto;padding:clamp(24px,6vw,78px)}h1{font-size:clamp(3rem,11vw,6rem);line-height:1.02;margin:16px 0;background:linear-gradient(110deg,#fff,#ff65c7,#a38afa);color:transparent;background-clip:text}h2{font-size:2rem;margin-top:65px}p{color:#ccbdda;line-height:1.75}a{color:#ffa8ec}small,.tag{letter-spacing:.16em;text-transform:uppercase;color:#db8acc;font-size:.75rem}section{border-top:1px solid #643f7766;padding-top:26px;margin-top:45px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(235px,1fr));gap:18px}article{padding:22px;border-radius:16px;background:#20152a;border:1px solid #ac69b73b}article h3{margin:12px 0}.links{display:flex;gap:20px;flex-wrap:wrap}footer{padding:50px 0;color:#91859b;font-size:12px}</style></head><body><main><small>PORTFOLIO / ${escapeHTML(roleLabel().name)}</small><h1>${escapeHTML(d.name||'Your name')}</h1><p style="font-size:clamp(1.1rem,3vw,1.6rem)">${escapeHTML(d.headline||`Aspiring ${roleLabel().name}`)}</p><section><h2>About</h2><p>${escapeHTML(d.about||'Curious learner building projects and improving skills.').replace(/\n/g,'<br>')}</p><div class="links">${safeGit?`<a href="${escapeHTML(safeGit)}" target="_blank" rel="noopener noreferrer">GitHub ↗</a>`:''}${email?`<a href="mailto:${escapeHTML(email)}">Contact ↗</a>`:''}</div></section><section><h2>Selected projects</h2><div class="grid">${projectHTML}</div></section><footer>Created by the student with Aivora. Claims and project evidence are self-reported.</footer></main></body></html>`;
+}
+function renderShowcase(){if(!$('#showcasePreview'))return;const d=gatherShowcase();$('#showcaseProjects').textContent=roleProjects().length+' PROJECTS';$('#showcasePreview').srcdoc=portfolioDocument(d)}
+$('#showcaseForm').addEventListener('submit',e=>{e.preventDefault();const d=gatherShowcase();if(!d.name||!d.headline){toast('Add a name and headline first');return}if(d.github&&!validatedPortfolioLink(d.github)){toast('GitHub URL must start with https://');return}state.showcase=d;persist();renderShowcase();toast('Portfolio preview saved to your account')});
+$('#showcaseDownload').addEventListener('click',()=>{const d=gatherShowcase();if(!d.name||!d.headline){toast('Enter your name and headline first');return}if(d.github&&!validatedPortfolioLink(d.github)){toast('Use an https:// URL for GitHub');return}state.showcase=d;persist();downloadText('aivora-my-portfolio.html',portfolioDocument(d),'text/html;charset=utf-8');toast('Your portfolio HTML is downloaded')});
 
 // Initialize views and all interactive modules.
 
-selectCareer('frontend');$('#networkRole').value=state.role;setJourney(0);updateDashboard();resetFit();route();checkAIStatus();
+selectCareer('frontend');$('#networkRole').value=state.role;setJourney(0);updateDashboard();renderRolePicker();resetFit();route();checkAIStatus();
 window.addEventListener('resize',()=>{resizeHero();resizeAtlas()},{passive:true});
 })();
