@@ -456,7 +456,7 @@ function createSyncTools(){
 createSyncTools();
 let toastTimer=0;function toast(message){const node=$('#toast');node.textContent=message;node.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>node.classList.remove('show'),2800)}
 function escapeHTML(s){return String(s).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
-function toolFromHash(){const h=decodeURIComponent(location.hash.slice(1)||'home');const path=h.split('/');return {page:['home','product','explore','how','pricing','login','dashboard'].includes(path[0])?path[0]:'home',tool:['fit','overview','skills','plan','roadmap','interview','resume','mentor','practice','projects','github','portfolio','jobs','learn','momentum','showcase'].includes(path[1])?path[1]:'overview'}}
+function toolFromHash(){const h=decodeURIComponent(location.hash.slice(1)||'home');const path=h.split('/');return {page:['home','product','explore','how','pricing','login','dashboard'].includes(path[0])?path[0]:'home',tool:['fit','overview','skills','plan','roadmap','interview','resume','mentor','practice','projects','github','portfolio','jobs','learn','momentum','showcase','news'].includes(path[1])?path[1]:'overview'}}
 function route(){const {page,tool}=toolFromHash();document.querySelector('.dash-heading')?.classList.toggle('dashboard-overview-heading',tool==='overview');$$('.view').forEach(el=>el.classList.toggle('active',el.id==='view-'+page));$$('[data-link]').forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+page));const menu=$('#mobileMenu');menu.classList.remove('open');$('#menuToggle').setAttribute('aria-expanded','false');if(page==='dashboard'&&!window.AivoraAuth?.isLoggedIn()){location.hash='#login';return}if(page==='dashboard')openTool(tool,false);window.scrollTo({top:0,behavior:'instant'});document.title='Aivora -works';observeReveals();if(page==='explore'){renderNetwork();setJourney(currentStep);setTimeout(()=>{resizeAtlas();placePlanets()},55)}}
 window.addEventListener('hashchange',route);
 $('#menuToggle').addEventListener('click',()=>{const open=$('#mobileMenu').classList.toggle('open');$('#menuToggle').setAttribute('aria-expanded',String(open))});
@@ -553,6 +553,7 @@ function openTool(tool,changeHash=true){
  document.querySelector('.dash-heading')?.classList.toggle('dashboard-overview-heading',primary==='overview');
  if(primary==='showcase'){showShowcaseFields();renderShowcase()}
  if(primary==='overview')renderMomentum();
+ if(primary==='news')loadAINews();
  $$('.dash-nav').forEach(el=>el.classList.toggle('active',el.dataset.tool===primary));
  $$('.tool-panel').forEach(el=>el.classList.toggle('active',el.id==='tool-'+primary));
  expandMerged(desired);
@@ -875,6 +876,65 @@ function portfolioDocument(d){
 function renderShowcase(){if(!$('#showcasePreview'))return;const d=gatherShowcase();$('#showcaseProjects').textContent=roleProjects().length+' PROJECTS';$('#showcasePreview').srcdoc=portfolioDocument(d)}
 $('#showcaseForm').addEventListener('submit',e=>{e.preventDefault();const d=gatherShowcase();if(!d.name||!d.headline){toast('Add a name and headline first');return}if(d.github&&!validatedPortfolioLink(d.github)){toast('GitHub URL must start with https://');return}state.showcase=d;saveQuietly();renderShowcase();toast('Portfolio preview saved locally — syncing…')});
 $('#showcaseDownload').addEventListener('click',()=>{const d=gatherShowcase();if(!d.name||!d.headline){toast('Enter your name and headline first');return}if(d.github&&!validatedPortfolioLink(d.github)){toast('Use an https:// URL for GitHub');return}state.showcase=d;saveQuietly();downloadText('aivora-my-portfolio.html',portfolioDocument(d),'text/html;charset=utf-8');toast('Your portfolio HTML is downloaded')});
+
+
+// AIVORA AI NEWS — live headlines only; never fabricate news with Gemini.
+let aiNewsLastLoaded=0,aiNewsLoading=false;
+function aiNewsMessage(message,kind='info'){
+ const status=$('#aiNewsState');if(!status)return;
+ status.textContent=message;status.dataset.kind=kind;status.hidden=false;
+}
+function safeNewsArticleUrl(raw){
+ try{const u=new URL(raw);return u.protocol==='https:'&&!u.username&&!u.password?u.href:''}catch{return ''}
+}
+function aiNewsRelativeDate(raw){
+ const ms=Date.parse(raw);if(!Number.isFinite(ms))return 'Date unavailable';
+ const diff=Date.now()-ms;if(diff>=0&&diff<86400000)return Math.max(1,Math.floor(diff/3600000))+'h ago';
+ if(diff>=0&&diff<7*86400000)return Math.max(1,Math.floor(diff/86400000))+'d ago';
+ return new Date(ms).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
+}
+function makeAiNewsCard(item){
+ if(!item||typeof item.title!=='string'||typeof item.url!=='string')return null;
+ const url=safeNewsArticleUrl(item.url);if(!url)return null;
+ const card=document.createElement('article');card.className='ai-news-card';
+ const meta=document.createElement('div');meta.className='ai-news-meta';
+ const source=document.createElement('span');source.className='ai-news-source';source.textContent=String(item.source||'News source').slice(0,55);
+ const time=document.createElement('time');time.textContent=aiNewsRelativeDate(item.publishedAt);if(Number.isFinite(Date.parse(item.publishedAt)))time.dateTime=new Date(item.publishedAt).toISOString();
+ meta.append(source,time);
+ const title=document.createElement('h3');title.textContent=item.title.slice(0,240);
+ const link=document.createElement('a');link.className='ai-news-story-link';link.textContent='READ ARTICLE ↗';link.href=url;link.target='_blank';link.rel='noopener noreferrer';link.setAttribute('aria-label','Read article: '+item.title.slice(0,160));
+ card.append(meta,title,link);return card;
+}
+async function loadAINews(force=false){
+ const grid=$('#aiNewsGrid'),button=$('#aiNewsRefresh');if(!grid||aiNewsLoading)return;
+ if(!force&&aiNewsLastLoaded&&Date.now()-aiNewsLastLoaded<5*60*1000)return;
+ aiNewsLoading=true;if(button){button.disabled=true;button.setAttribute('aria-busy','true');button.firstChild.textContent='REFRESHING ';}
+ if(!grid.children.length)aiNewsMessage('Finding recent AI news from publishers…');
+ else aiNewsMessage('Updating headlines…');
+ try{
+  const ctrl=new AbortController(),timer=setTimeout(()=>ctrl.abort(),12000);
+  let res;
+  try{res=await fetch('/api/ai-news'+(force?'?refresh='+Date.now():''),{headers:{Accept:'application/json'},signal:ctrl.signal})}
+  finally{clearTimeout(timer)}
+  if(!res.ok)throw Error('News service returned '+res.status);
+  const data=await res.json();if(!data||!Array.isArray(data.articles))throw Error('Invalid news response');
+  const fragment=document.createDocumentFragment();let count=0;
+  for(const item of data.articles.slice(0,24)){const card=makeAiNewsCard(item);if(card){fragment.append(card);count++}}
+  if(count){grid.replaceChildren(fragment);$('#aiNewsState').hidden=true;aiNewsLastLoaded=Date.now();
+    $('#aiNewsStamp').textContent=`${count} AI stories · ${data.provider||'News providers'} · updated ${new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
+  }else{
+    if(!grid.children.length)aiNewsMessage('No recent AI headlines available right now. Try Refresh later.','empty');
+    else aiNewsMessage('No new results. Showing the last fetched stories.','warning');
+  }
+ }catch(err){
+  console.warn('Aivora AI News feed:',err?.message||err);
+  aiNewsMessage(grid.children.length?'Cannot refresh right now; previously loaded stories remain available.':'AI news could not load right now. Check your internet connection or try Refresh.','error');
+ }finally{
+  aiNewsLoading=false;
+  if(button){button.disabled=false;button.removeAttribute('aria-busy');button.firstChild.textContent='REFRESH NEWS ';}
+ }
+}
+$('#aiNewsRefresh')?.addEventListener('click',()=>loadAINews(true));
 
 // Initialize views and all interactive modules.
 
